@@ -7,10 +7,13 @@
 
 1. https://supabase.com/dashboard にログインし、新規プロジェクトを作成する
 2. リージョンは東京（Northeast Asia）を選択する
-3. 作成後、プロジェクトの以下の情報を控える
+3. 作成後、Project Settings > Data API から以下の情報を控える
    - Project URL（`SUPABASE_URL`）
-   - anon / publishable key（`SUPABASE_ANON_KEY`）
-   - service_role key（Edge Function等サーバー側専用。クライアントには絶対に含めない）
+   - Publishable key（`SUPABASE_ANON_KEY`。旧anon keyに相当。クライアントに埋め込んでよい）
+   - Secret key（旧service_role keyに相当。Edge Function等サーバー側専用。クライアントには絶対に含めない）
+
+> Supabaseは2024年後半以降、キー体系を anon/service_role（レガシー）から Publishable/Secret key に移行している。
+> 新規プロジェクトではデフォルトでPublishable/Secret keyが表示され、旧anon/service_roleは「Legacy keys」タブに退避されている。
 
 ## 2. Supabase CLIのセットアップ
 
