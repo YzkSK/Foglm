@@ -11,3 +11,23 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+foglm.iml
+.metadata
+
+# Android
+android/.gradle/
+android/local.properties
+android/**/gradle-wrapper.jar
+
+# iOS
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/.symlinks/
