@@ -16,6 +16,7 @@
 ## Git運用ルール
 
 - 作業を始める前に必ず新しいブランチを切る。mainブランチで直接作業しない。
+- バグ修正は必ずissueを発行してから作業を開始すること。
 - PRを作成するときは、リポジトリにあるPRテンプレート(`.github/PULL_REQUEST_TEMPLATE.md`)に従って記述する。
 - Issueを作成するときは、リポジトリにあるIssueテンプレート(`.github/ISSUE_TEMPLATE/`)に従って記述する。
 
