@@ -31,3 +31,8 @@ android/**/gradle-wrapper.jar
 ios/Flutter/ephemeral/
 ios/Pods/
 ios/.symlinks/
+
+# Firebase
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
