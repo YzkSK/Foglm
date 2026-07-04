@@ -68,7 +68,7 @@ npx supabase functions deploy <function-name>
 
 ## 7. アプリ側の環境変数
 
-Flutterアプリからは `--dart-define` で以下を渡す（詳細は #48 環境変数・シークレット管理の整備を参照）。
+Flutterアプリからは `--dart-define` で以下を渡す(詳細は[secrets.md](./secrets.md)を参照)。
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
@@ -76,5 +76,5 @@ Flutterアプリからは `--dart-define` で以下を渡す（詳細は #48 環
 ## 関連Issue
 
 - #46 Supabaseプロジェクト初期セットアップ
-- #48 環境変数・シークレット管理の整備
+- #48 環境変数・シークレット管理の整備 → [secrets.md](./secrets.md)
 - #51 CD構築（Supabaseマイグレーション・Edge Functions自動デプロイ）
