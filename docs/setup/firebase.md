@@ -45,5 +45,5 @@ npx supabase secrets set FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)"
 ## 関連Issue
 
 - #47 Firebaseプロジェクトセットアップ（FCM用）
-- #27 FCMプッシュ通知基盤構築
+- #30 FCMプッシュ通知基盤構築
 - #28 現像完了通知実装
