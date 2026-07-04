@@ -73,6 +73,21 @@ Flutterアプリからは `--dart-define` で以下を渡す(詳細は[secrets.m
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 
+## 8. デプロイ失敗時の対応(ロールバック方針)
+
+CD(`.github/workflows/cd.yml`)は `supabase db push` / `supabase functions deploy` の自動ロールバックを行わない。失敗時は以下の手順で手動対応する。
+
+### マイグレーション適用(`supabase db push`)が失敗した場合
+1. GitHub Actionsのログでどのマイグレーションファイルが失敗したか確認する。
+2. 本番環境のスキーマ状態を確認し、失敗したマイグレーションが部分適用されていないか確認する。
+3. 問題のあるマイグレーションを直接編集せず、それを打ち消す新しいマイグレーションSQL(`supabase/migrations/`に追加)を作成する。
+4. 修正後、再度mainにマージしてCDを再実行する。
+
+### Edge Functionsデプロイ(`supabase functions deploy`)が失敗した場合
+1. デプロイに失敗しても、直前にデプロイ済みのバージョンは稼働し続けるため、サービス断は発生しない。
+2. GitHub Actionsのログでエラー内容を確認し、Edge Function側のコードを修正する。
+3. 修正後、再度mainにマージしてCDを再実行する。
+
 ## 関連Issue
 
 - #46 Supabaseプロジェクト初期セットアップ
