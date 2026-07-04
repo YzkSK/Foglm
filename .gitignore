@@ -11,6 +11,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+dart_define*.json
+!dart_define.example.json
 
 # Flutter/Dart
 .dart_tool/

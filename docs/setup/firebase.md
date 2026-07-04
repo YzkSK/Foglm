@@ -38,6 +38,8 @@ flutterfire configure
 npx supabase secrets set FIREBASE_SERVICE_ACCOUNT="$(cat service-account.json)"
 ```
 
+シークレットの取り扱いルールの詳細は[secrets.md](./secrets.md)を参照。
+
 3. Edge FunctionからFCM HTTP v1 APIを呼び出す（実装は #28 現像完了通知実装で対応）
 
 ## 関連Issue
