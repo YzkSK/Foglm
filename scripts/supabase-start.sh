@@ -38,8 +38,10 @@ if [ -z "$API_URL" ] || [ -z "$ANON_KEY" ]; then
   exit 1
 fi
 
-sed -i.bak -E "s#(\"SUPABASE_URL\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"#\1\"$API_URL\"#" "$DART_DEFINE_FILE"
-sed -i.bak -E "s#(\"SUPABASE_ANON_KEY\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"#\1\"$ANON_KEY\"#" "$DART_DEFINE_FILE"
+sed -i.bak -E \
+  -e "s#(\"SUPABASE_URL\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"#\1\"$API_URL\"#" \
+  -e "s#(\"SUPABASE_ANON_KEY\"[[:space:]]*:[[:space:]]*)\"[^\"]*\"#\1\"$ANON_KEY\"#" \
+  "$DART_DEFINE_FILE"
 rm -f "$DART_DEFINE_FILE.bak"
 
 echo ""
