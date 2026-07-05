@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(7);
 
 -- Fixtures: group(A=現役メンバー, D=脱退済み)。B=Aが招待する相手。F=グループと無関係の第三者。E=Fが招待しようとする相手。
 insert into auth.users (id) values
@@ -18,7 +18,9 @@ values
   ('00000000-0000-0000-0000-000000000025', 'email', 'Invitee E');
 
 insert into public.groups (id, name, mode, created_by)
-values ('10000000-0000-0000-0000-000000000004', 'Group Members Test', 'group', '00000000-0000-0000-0000-000000000021');
+values
+  ('10000000-0000-0000-0000-000000000004', 'Group Members Test', 'group', '00000000-0000-0000-0000-000000000021'),
+  ('10000000-0000-0000-0000-000000000005', 'Another Group', 'group', '00000000-0000-0000-0000-000000000024');
 
 insert into public.group_members (group_id, user_id, left_at)
 values
@@ -74,6 +76,20 @@ select throws_ok(
   null,
   null,
   'unrelated user F cannot invite user E into a group F does not belong to'
+);
+
+reset role;
+
+-- Aが別のグループに自分の行を移動しようとしても失敗する(トリガーで防止)
+set local role authenticated;
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-000000000021"}';
+
+select throws_ok(
+  $$ update public.group_members set group_id = '10000000-0000-0000-0000-000000000005'
+     where group_id = '10000000-0000-0000-0000-000000000004' and user_id = '00000000-0000-0000-0000-000000000021' $$,
+  'P0001',
+  'group_members: group_id cannot be changed on update',
+  'user A cannot change group_id on their own row'
 );
 
 reset role;

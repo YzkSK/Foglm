@@ -15,4 +15,5 @@ as $$
   );
 $$;
 
+revoke execute on function public.is_active_member(uuid, uuid) from public;
 grant execute on function public.is_active_member(uuid, uuid) to authenticated;

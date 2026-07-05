@@ -1,5 +1,5 @@
 begin;
-select plan(3);
+select plan(4);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000001'),
@@ -32,6 +32,18 @@ select ok(
   not public.is_active_member('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000099'),
   'non-member returns false'
 );
+
+-- anon role cannot execute the function (SECURITY DEFINER function should be restricted)
+set local role anon;
+
+select throws_ok(
+  $$ select public.is_active_member('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001') $$,
+  null,
+  null,
+  'anon role cannot execute is_active_member function'
+);
+
+reset role;
 
 select * from finish();
 rollback;

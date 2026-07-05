@@ -19,3 +19,22 @@ using (user_id = auth.uid());
 
 grant insert on public.group_members to authenticated;
 grant update on public.group_members to authenticated;
+
+-- Prevent group_id from being changed on update. Group membership is immutable;
+-- users can only update left_at to leave/rejoin, not move rows to other groups.
+create function public.prevent_group_members_group_id_change()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.group_id <> old.group_id then
+    raise exception 'group_members: group_id cannot be changed on update';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_prevent_group_members_group_id_change
+  before update on public.group_members
+  for each row
+  execute function public.prevent_group_members_group_id_change();
