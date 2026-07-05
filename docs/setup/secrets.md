@@ -28,7 +28,7 @@ flutter build apk --dart-define-from-file=dart_define.json
 
 dev/prodなど環境を分ける場合は `dart_define.dev.json` / `dart_define.prod.json` のように分割し、それぞれ`.gitignore`の`dart_define*.json`パターンで除外される。
 
-> ローカルのSupabase開発環境を使う場合は、上記の手動コピー・編集を`scripts/supabase-start.sh`([docs/setup/supabase.md](./supabase.md)参照)が自動化し、`SUPABASE_URL`/`SUPABASE_ANON_KEY`にローカル開発用の値を自動で設定する。実際の(クラウド)Supabaseプロジェクトを参照する場合は、引き続き上記の手動フローを使う。
+> ローカルのSupabase開発環境を使う場合は、上記の手動コピー・編集を`tool/supabase_start.dart`([docs/setup/supabase.md](./supabase.md)参照)が自動化し、`SUPABASE_URL`/`SUPABASE_ANON_KEY`にローカル開発用の値を自動で設定する。実際の(クラウド)Supabaseプロジェクトを参照する場合は、引き続き上記の手動フローを使う。
 
 ## 3. Supabase Edge Functionsのシークレット
 

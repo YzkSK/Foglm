@@ -4,10 +4,10 @@ A new Flutter project.
 
 ## Getting Started
 
-開発環境のセットアップは以下のスクリプトを実行するだけでOK(Flutter依存関係のインストール、`dart_define.json`の準備を行う)。
+開発環境のセットアップは以下のコマンドを実行するだけでOK(Flutter依存関係のインストール、`dart_define.json`の準備を行う)。
 
 ```bash
-./scripts/setup.sh
+dart run tool/setup.dart
 ```
 
 Supabaseローカル環境のセットアップは別途[docs/setup/supabase.md](docs/setup/supabase.md)を参照。
