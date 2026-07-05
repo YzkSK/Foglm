@@ -1,8 +1,8 @@
 -- group_members: 脱退は物理削除せず left_at を設定する(履歴として残す)。
 -- 再参加は新規行ではなく既存行の left_at を NULL に戻す UPDATE で行う(仕様書 5.1参照)。
 create table public.group_members (
-  group_id uuid not null references public.groups (id),
-  user_id uuid not null references public.users (id),
+  group_id uuid not null references public.groups (id) on delete cascade,
+  user_id uuid not null references public.users (id) on delete cascade,
   joined_at timestamptz not null default now(),
   left_at timestamptz,
   primary key (group_id, user_id)
@@ -18,6 +18,12 @@ declare
   active_count integer;
 begin
   if new.left_at is not null then
+    return new;
+  end if;
+
+  -- left_atがNULL→NULLのまま(参加・脱退・再参加を伴わない更新)であれば
+  -- ロック取得・カウントは不要なのでスキップする。
+  if TG_OP = 'UPDATE' and old.left_at is null then
     return new;
   end if;
 

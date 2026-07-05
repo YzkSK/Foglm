@@ -8,6 +8,6 @@ create table public.groups (
   status text not null default 'active' check (status in ('active', 'archived')),
   -- 脱退により現役メンバーが1人になった時刻。作成時はNULL(仕様書 5.1参照)
   solo_since timestamptz,
-  created_by uuid not null references public.users (id),
+  created_by uuid references public.users (id) on delete set null,
   created_at timestamptz not null default now()
 );
