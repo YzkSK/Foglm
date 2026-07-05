@@ -23,7 +23,9 @@ exit 0
 EOF
   chmod +x "$bin_dir/npx"
 
-  PATH="$bin_dir:$PATH" bash "$TARGET_SCRIPT" > /dev/null
+  # Matches the PATH="$bin_dir:/usr/bin" convention used in test_supabase_start.sh:
+  # keeps bash resolvable without prepending the full real PATH.
+  PATH="$bin_dir:/usr/bin" bash "$TARGET_SCRIPT" > /dev/null
 
   grep -q "supabase stop" "$call_log" || fail "test_calls_supabase_stop: npx was not called with 'supabase stop'"
 
