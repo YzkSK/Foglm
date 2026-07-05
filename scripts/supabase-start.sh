@@ -30,8 +30,8 @@ fi
 
 STATUS_OUTPUT="$(npx supabase status)"
 
-API_URL="$(echo "$STATUS_OUTPUT" | grep -i -E '^[[:space:]]*API URL' | head -n1 | sed -E 's/^[^:]*:[[:space:]]*//')"
-ANON_KEY="$(echo "$STATUS_OUTPUT" | grep -i -E '^[[:space:]]*anon key' | head -n1 | sed -E 's/^[^:]*:[[:space:]]*//')"
+API_URL="$(echo "$STATUS_OUTPUT" | grep -i -E '^[[:space:]]*API URL' | head -n1 | sed -E 's/^[^:]*:[[:space:]]*//' || true)"
+ANON_KEY="$(echo "$STATUS_OUTPUT" | grep -i -E '^[[:space:]]*anon key' | head -n1 | sed -E 's/^[^:]*:[[:space:]]*//' || true)"
 
 if [ -z "$API_URL" ] || [ -z "$ANON_KEY" ]; then
   echo "Error: failed to parse 'supabase status' output. dart_define.json was not updated." >&2
