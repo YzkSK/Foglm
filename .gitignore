@@ -37,3 +37,6 @@ ios/.symlinks/
 # Firebase
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+
+# Generated files
+*.g.dart
