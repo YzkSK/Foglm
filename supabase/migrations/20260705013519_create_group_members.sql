@@ -21,6 +21,10 @@ begin
     return new;
   end if;
 
+  -- group_id単位でアドバイザリロックを取得し、同時参加リクエストによる
+  -- カウント→判定のすり抜け(上限超過)を防ぐ(仕様書 5.2.2の排他制御方式と同様)。
+  perform pg_advisory_xact_lock(hashtextextended(new.group_id::text, 0));
+
   select count(*) into active_count
   from public.group_members
   where group_id = new.group_id
