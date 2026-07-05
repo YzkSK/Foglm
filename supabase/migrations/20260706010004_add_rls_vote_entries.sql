@@ -25,7 +25,15 @@ with check (
 
 create policy "vote_entries_update_own" on public.vote_entries
 for update
-using (user_id = auth.uid());
+using (user_id = auth.uid())
+with check (
+  user_id = auth.uid()
+  and exists (
+    select 1 from public.daily_votes dv
+    where dv.id = vote_entries.daily_vote_id
+      and public.is_active_member(dv.group_id, auth.uid())
+  )
+);
 
 grant select on public.vote_entries to authenticated;
 grant insert on public.vote_entries to authenticated;
