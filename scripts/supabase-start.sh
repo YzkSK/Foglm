@@ -28,10 +28,10 @@ if [ ! -f "$DART_DEFINE_FILE" ]; then
   cp "$DART_DEFINE_EXAMPLE" "$DART_DEFINE_FILE"
 fi
 
-STATUS_OUTPUT="$(npx supabase status)"
+STATUS_OUTPUT="$(npx supabase status -o env)"
 
-API_URL="$(echo "$STATUS_OUTPUT" | grep -i -E '^[[:space:]]*API URL' | head -n1 | sed -E 's/^[^:]*:[[:space:]]*//' || true)"
-ANON_KEY="$(echo "$STATUS_OUTPUT" | grep -i -E '^[[:space:]]*anon key' | head -n1 | sed -E 's/^[^:]*:[[:space:]]*//' || true)"
+API_URL="$(echo "$STATUS_OUTPUT" | grep -E '^API_URL=' | head -n1 | sed -E 's/^API_URL="?([^"]*)"?$/\1/' || true)"
+ANON_KEY="$(echo "$STATUS_OUTPUT" | grep -E '^ANON_KEY=' | head -n1 | sed -E 's/^ANON_KEY="?([^"]*)"?$/\1/' || true)"
 
 if [ -z "$API_URL" ] || [ -z "$ANON_KEY" ]; then
   echo "Error: failed to parse 'supabase status' output. dart_define.json was not updated." >&2

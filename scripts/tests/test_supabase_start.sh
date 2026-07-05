@@ -74,9 +74,9 @@ EOF
 echo "\$@" >> "$call_log"
 if [ "\$1" = "supabase" ] && [ "\$2" = "status" ]; then
   cat <<'STATUS'
-         API URL: http://127.0.0.1:54321
-          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        anon key: test-local-anon-key
+API_URL="http://127.0.0.1:54321"
+DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+ANON_KEY="test-local-anon-key"
 STATUS
 fi
 exit 0
@@ -118,9 +118,9 @@ EOF
 #!/usr/bin/env bash
 if [ "$1" = "supabase" ] && [ "$2" = "status" ]; then
   cat <<'STATUS'
-         API URL: http://127.0.0.1:54321
-          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        anon key: test-local-anon-key
+API_URL="http://127.0.0.1:54321"
+DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+ANON_KEY="test-local-anon-key"
 STATUS
   exit 0
 fi
@@ -166,9 +166,9 @@ EOF
 #!/usr/bin/env bash
 if [ "$1" = "supabase" ] && [ "$2" = "status" ]; then
   cat <<'STATUS'
-         API URL: http://127.0.0.1:54321
-          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        anon key: test-local-anon-key
+API_URL="http://127.0.0.1:54321"
+DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+ANON_KEY="test-local-anon-key"
 STATUS
   exit 0
 fi
