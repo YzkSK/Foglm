@@ -25,15 +25,27 @@ npx supabase login
 npx supabase link --project-ref <YOUR_PROJECT_REF>
 ```
 
-## 3. ローカル開発環境の起動（任意・現時点ではスキップ中）
+## 3. ローカル開発環境の起動
 
-ローカル開発にはDockerが必要。現状は導入コストに対してメリットが薄いため見送っており、クラウド上の開発用プロジェクトに直接マイグレーションを反映して動作確認する運用としている。RLSやトリガーなど壊れやすい変更を試す機会が増えてきたタイミングで、改めて導入を検討する。
+以前はDocker導入コストに対してメリットが薄いため見送っていたが、RLSやトリガーなど壊れやすい変更を
+試す機会が増えてきたため、ローカル環境を導入した。ローカル開発にはDockerが必要。
+
+以下のコマンドを実行すると、ローカルDBの起動・マイグレーション適用・Flutter側の接続設定
+(`dart_define.json`)までが一括で行われる。
 
 ```bash
-npx supabase start
+dart run tool/supabase_start.dart
 ```
 
-停止する場合は `npx supabase stop`。
+初回実行時はDockerイメージの取得が入るため時間がかかる。実行後、`dart_define.json`が
+無ければ`dart_define.example.json`からコピーされた上で、`SUPABASE_URL`/`SUPABASE_ANON_KEY`が
+ローカル環境の値に書き換えられる(ローカル固定の開発用キーであり、本番のSecret key等とは無関係)。
+
+停止する場合は以下を実行する。
+
+```bash
+dart run tool/supabase_stop.dart
+```
 
 ## 4. マイグレーションの適用
 
