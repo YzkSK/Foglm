@@ -72,9 +72,23 @@ EOF
   cat > "$bin_dir/npx" <<EOF
 #!/usr/bin/env bash
 echo "\$@" >> "$call_log"
+if [ "\$1" = "supabase" ] && [ "\$2" = "status" ]; then
+  cat <<'STATUS'
+         API URL: http://127.0.0.1:54321
+          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        anon key: test-local-anon-key
+STATUS
+fi
 exit 0
 EOF
   chmod +x "$bin_dir/npx"
+
+  cat > "$work_dir/dart_define.example.json" <<'EOF'
+{
+  "SUPABASE_URL": "https://xxxxxxxxxxxx.supabase.co",
+  "SUPABASE_ANON_KEY": "your-publishable-key-here"
+}
+EOF
 
   PATH="$bin_dir:/usr/bin" SUPABASE_START_REPO_ROOT="$work_dir" bash "$TARGET_SCRIPT" > /dev/null
 
@@ -85,8 +99,55 @@ EOF
   echo "PASS: test_docker_running_starts_supabase"
 }
 
+test_happy_path_updates_dart_define() {
+  local work_dir
+  work_dir="$(mktemp -d)"
+  local bin_dir="$work_dir/bin"
+  mkdir -p "$bin_dir"
+
+  cat > "$bin_dir/docker" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "info" ]; then
+  exit 0
+fi
+exit 0
+EOF
+  chmod +x "$bin_dir/docker"
+
+  cat > "$bin_dir/npx" <<'EOF'
+#!/usr/bin/env bash
+if [ "$1" = "supabase" ] && [ "$2" = "status" ]; then
+  cat <<'STATUS'
+         API URL: http://127.0.0.1:54321
+          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        anon key: test-local-anon-key
+STATUS
+  exit 0
+fi
+exit 0
+EOF
+  chmod +x "$bin_dir/npx"
+
+  cat > "$work_dir/dart_define.example.json" <<'EOF'
+{
+  "SUPABASE_URL": "https://xxxxxxxxxxxx.supabase.co",
+  "SUPABASE_ANON_KEY": "your-publishable-key-here"
+}
+EOF
+
+  PATH="$bin_dir:/usr/bin" SUPABASE_START_REPO_ROOT="$work_dir" bash "$TARGET_SCRIPT" > /dev/null
+
+  [ -f "$work_dir/dart_define.json" ] || fail "test_happy_path_updates_dart_define: dart_define.json not created"
+  grep -q '"SUPABASE_URL": "http://127.0.0.1:54321"' "$work_dir/dart_define.json" || fail "test_happy_path_updates_dart_define: SUPABASE_URL not updated"
+  grep -q '"SUPABASE_ANON_KEY": "test-local-anon-key"' "$work_dir/dart_define.json" || fail "test_happy_path_updates_dart_define: SUPABASE_ANON_KEY not updated"
+
+  rm -rf "$work_dir"
+  echo "PASS: test_happy_path_updates_dart_define"
+}
+
 test_docker_not_installed
 test_docker_not_running
 test_docker_running_starts_supabase
+test_happy_path_updates_dart_define
 
 echo "All tests passed."
