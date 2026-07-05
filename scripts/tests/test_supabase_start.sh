@@ -9,6 +9,11 @@ fail() {
   exit 1
 }
 
+# ENVIRONMENT ASSUMPTION: Tests set PATH="$bin_dir:/usr/bin" to ensure test stubs (docker/npx)
+# are found first, while keeping /usr/bin in PATH so bash/grep/mktemp remain available.
+# This assumes /usr/bin does NOT contain real docker/npx binaries on the test machine.
+# This assumption may fail on systems where Docker is installed system-wide (e.g. Linux with apt).
+
 test_docker_not_installed() {
   local work_dir
   work_dir="$(mktemp -d)"
