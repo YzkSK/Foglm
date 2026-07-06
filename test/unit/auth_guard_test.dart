@@ -51,4 +51,28 @@ void main() {
       expect(result, '/verify-pending');
     });
   });
+
+  group('authRequiredRedirect', () {
+    test('does not redirect a logged-in user', () {
+      const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+      final result = authRequiredRedirect(
+        user: user,
+        location: '/some-future-screen',
+      );
+      expect(result, isNull);
+    });
+
+    test('does not redirect when already on an allow-listed path', () {
+      final result = authRequiredRedirect(user: null, location: '/');
+      expect(result, isNull);
+    });
+
+    test('redirects an unauthenticated user to the login screen', () {
+      final result = authRequiredRedirect(
+        user: null,
+        location: '/some-future-screen',
+      );
+      expect(result, '/');
+    });
+  });
 }

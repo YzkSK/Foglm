@@ -32,6 +32,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final user = ref.read(currentPublicUserProvider).value;
+      final authRedirect = authRequiredRedirect(
+        user: user,
+        location: state.matchedLocation,
+      );
+      if (authRedirect != null) {
+        return authRedirect;
+      }
       return emailVerificationRedirect(
         user: user,
         location: state.matchedLocation,

@@ -15,6 +15,8 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
+
+  Future<void> signOut();
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -58,6 +60,11 @@ class SupabaseAuthRepository implements AuthRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<void> signOut() async {
+    await _client.auth.signOut();
   }
 }
 

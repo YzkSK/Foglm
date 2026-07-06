@@ -5,6 +5,26 @@ import 'package:foglm/features/auth/domain/public_user.dart';
 /// この一覧に含めない(=自動的にガード対象になる)想定。
 const allowedWhenUnverifiedPaths = {'/', '/signup', '/verify-pending'};
 
+/// 未ログインでもアクセス可能なパス。ログイン必須の画面は今後の別issueで
+/// 追加され次第、この一覧に含めない(=自動的にガード対象になる)想定。
+const allowedWhenUnauthenticatedPaths = {'/'};
+
+/// 未ログイン(または`public.users`に対応する行が存在しない)ユーザーが
+/// 許可リスト外の画面へ遷移しようとした場合、ログイン画面('/')へリダイレクトする
+/// (仕様書 3.1.1 / 6.1 sign_out参照)。
+String? authRequiredRedirect({
+  required PublicUserRow? user,
+  required String location,
+}) {
+  if (user != null) {
+    return null;
+  }
+  if (allowedWhenUnauthenticatedPaths.contains(location)) {
+    return null;
+  }
+  return '/';
+}
+
 /// 未確認ユーザーの機能制限(仕様書 3.1・6.1参照)。
 /// メール・パスワード方式で`email_verified = false`のユーザーが許可リスト外の画面へ
 /// 遷移しようとした場合、確認待ち画面へリダイレクトする。
