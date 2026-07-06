@@ -24,7 +24,7 @@ begin
     v_provider := 'x';
   end if;
 
-  if v_provider not in ('google', 'apple', 'x', 'instagram', 'email') then
+  if v_provider not in ('google', 'apple', 'x', 'email') then
     return new;
   end if;
 
