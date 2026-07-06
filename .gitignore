@@ -42,5 +42,8 @@ ios/Runner/GoogleService-Info.plist
 *.g.dart
 *.freezed.dart
 
+# Golden test failure diffs (local-only debug output)
+**/failures/
+
 # Superpowers docs (local only)
 docs/superpowers/

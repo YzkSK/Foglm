@@ -17,6 +17,8 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<void> signOut();
+
   Future<void> requestPasswordReset({required String email});
 
   Future<void> resetPassword({required String newPassword});
@@ -63,6 +65,11 @@ class SupabaseAuthRepository implements AuthRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<void> signOut() async {
+    await _client.auth.signOut();
   }
 
   @override
