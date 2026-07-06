@@ -15,6 +15,10 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
+
+  Future<void> requestPasswordReset({required String email});
+
+  Future<void> resetPassword({required String newPassword});
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -58,6 +62,22 @@ class SupabaseAuthRepository implements AuthRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<void> requestPasswordReset({required String email}) async {
+    await _client.functions.invoke(
+      'request-password-reset',
+      body: {'email': email},
+    );
+  }
+
+  @override
+  Future<void> resetPassword({required String newPassword}) async {
+    await _client.functions.invoke(
+      'reset-password',
+      body: {'password': newPassword},
+    );
   }
 }
 
