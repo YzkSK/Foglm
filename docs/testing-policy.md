@@ -31,3 +31,15 @@
 
 - 上記いずれのロジックも、時刻やDBアクセスなど外部要因に依存する部分は抽象化し、単体テストでは`mocktail`(Flutter側)またはDenoの標準的なスタブ手法(Edge Functions側)で差し替えられるようにする。
 - 単体テストで検証しきれない排他制御・実DBが絡む挙動は、integration testとして別途検討する(本ドキュメントの対象外。必要になった時点で別Issueとする)。
+
+## Golden Test(UIの見た目のテスト)
+
+- UIコンポーネント・画面の見た目を検証するGolden Testには`alchemist`パッケージを使う(golden_toolkitはdiscontinuedのため不採用)。
+- `test/flutter_test_config.dart`で全体設定を行っており、プラットフォーム固有(`platform`)のgoldenは無効化し、フォント差異の影響を受けない`ci`バリアントのみを使用する。これによりCI(Ubuntu)とローカル(Windows/macOS等)で同じgolden画像を共有できる。
+- 配置規則: テストファイルと同階層の`goldens/ci/<fileName>.png`に生成される(`goldens/ci/`配下は自動生成物として扱う)。
+- 画面・コンポーネントのGolden Testは`test/golden/`配下に置き、対象ウィジェット単位でファイルを分ける。
+- 実行・更新コマンド:
+  - 通常実行(差分検知): `flutter test`
+  - golden画像の生成・更新: `flutter test --update-goldens`
+  - Golden Testのみ実行: `flutter test --tags golden`
+- CIでは`flutter test`実行時にgoldenの差分があれば通常のテスト失敗として検知される。失敗時は比較用の差分画像(`failures/`配下)をArtifactとしてアップロードする。
