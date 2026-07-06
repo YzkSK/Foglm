@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>グループで共有するフィルムの撮影に使用します</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>撮影時にカメラが利用するマイクへのアクセスに使用します</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
