@@ -61,7 +61,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
     setState(() => _localValidationError = null);
 
-    await ref.read(signUpControllerProvider.notifier).submit(
+    await ref
+        .read(signUpControllerProvider.notifier)
+        .submit(
           email: email,
           password: password,
         );
@@ -78,7 +80,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(signUpControllerProvider);
-    final errorMessage = _localValidationError ??
+    final errorMessage =
+        _localValidationError ??
         (state.hasError
             ? _describeFailure(state.error! as SignUpFailure)
             : null);

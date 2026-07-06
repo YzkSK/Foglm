@@ -9,7 +9,9 @@ class SignUpController extends AsyncNotifier<void> {
   Future<void> submit({required String email, required String password}) async {
     state = const AsyncLoading<void>();
     state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signUpWithEmail(
+      () => ref
+          .read(authRepositoryProvider)
+          .signUpWithEmail(
             email: email,
             password: password,
           ),
@@ -17,5 +19,6 @@ class SignUpController extends AsyncNotifier<void> {
   }
 }
 
-final signUpControllerProvider =
-    AsyncNotifierProvider<SignUpController, void>(SignUpController.new);
+final signUpControllerProvider = AsyncNotifierProvider<SignUpController, void>(
+  SignUpController.new,
+);

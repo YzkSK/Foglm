@@ -12,8 +12,11 @@ final currentPublicUserProvider = FutureProvider<PublicUserRow?>((ref) async {
     return null;
   }
 
-  final row =
-      await client.from('users').select().eq('id', userId).maybeSingle();
+  final row = await client
+      .from('users')
+      .select()
+      .eq('id', userId)
+      .maybeSingle();
   if (row == null) {
     return null;
   }
