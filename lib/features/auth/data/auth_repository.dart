@@ -11,7 +11,10 @@ abstract class AuthRepository {
 
   Future<void> resendVerificationEmail({required String email});
 
-  Future<bool> refreshAndCheckEmailVerified();
+  Future<bool> checkEmailVerifiedBySignIn({
+    required String email,
+    required String password,
+  });
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -31,6 +34,8 @@ class SupabaseAuthRepository implements AuthRepository {
       );
     } on FunctionException catch (e) {
       throw mapFunctionExceptionToSignUpFailure(e);
+    } on Object catch (_) {
+      throw const UnknownSignUpFailure();
     }
   }
 
@@ -40,20 +45,19 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<bool> refreshAndCheckEmailVerified() async {
-    await _client.auth.refreshSession();
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) {
-      return false;
+  Future<bool> checkEmailVerifiedBySignIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _client.auth.signInWithPassword(email: email, password: password);
+      return true;
+    } on AuthException catch (e) {
+      if (e.code == 'email_not_confirmed') {
+        return false;
+      }
+      rethrow;
     }
-
-    final row = await _client
-        .from('users')
-        .select('email_verified')
-        .eq('id', userId)
-        .single();
-
-    return row['email_verified'] as bool? ?? false;
   }
 }
 

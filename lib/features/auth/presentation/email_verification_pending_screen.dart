@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
+import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class EmailVerificationPendingScreen extends ConsumerStatefulWidget {
-  const EmailVerificationPendingScreen({required this.email, super.key});
+/// `/verify-pending`ルートの`extra`として渡す引数。
+///
+/// パスワードはS01c画面で「確認した」ボタン押下時に再サインインするために
+/// メモリ上でのみ引き回す(永続化・ログ出力は一切行わない)。
+class VerifyPendingArgs {
+  const VerifyPendingArgs({required this.email, required this.password});
 
   final String email;
+  final String password;
+}
+
+class EmailVerificationPendingScreen extends ConsumerStatefulWidget {
+  const EmailVerificationPendingScreen({
+    required this.email,
+    required this.password,
+    super.key,
+  });
+
+  final String email;
+  final String password;
 
   @override
   ConsumerState<EmailVerificationPendingScreen> createState() =>
@@ -39,11 +56,15 @@ class _EmailVerificationPendingScreenState
     try {
       final verified = await ref
           .read(authRepositoryProvider)
-          .refreshAndCheckEmailVerified();
+          .checkEmailVerifiedBySignIn(
+            email: widget.email,
+            password: widget.password,
+          );
       if (!mounted) {
         return;
       }
       if (verified) {
+        ref.invalidate(currentPublicUserProvider);
         context.go('/');
       } else {
         setState(() => _message = 'まだ確認が完了していません。メール内のリンクを確認してください。');

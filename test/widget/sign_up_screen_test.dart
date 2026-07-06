@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
+import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -19,7 +20,10 @@ Widget _wrap(AuthRepository repository) {
       ),
       GoRoute(
         path: '/verify-pending',
-        builder: (context, state) => Text('verify-pending:${state.extra}'),
+        builder: (context, state) {
+          final args = state.extra! as VerifyPendingArgs;
+          return Text('verify-pending:${args.email}:${args.password}');
+        },
       ),
     ],
   );
@@ -117,7 +121,10 @@ void main() {
     await tester.tap(find.byKey(const Key('sign_up_submit_button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('verify-pending:foo@example.com'), findsOneWidget);
+    expect(
+      find.text('verify-pending:foo@example.com:Abcdefg1'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

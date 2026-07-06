@@ -90,8 +90,8 @@ Deno.serve(async (req: Request) => {
       console.error(
         `Failed to compensate for public.users insert failure: ` +
           `auth.users row ${signUpData.user.id} is now orphaned. ` +
-          `insertError=${JSON.stringify(insertError)}, ` +
-          `deleteError=${JSON.stringify(deleteError)}`,
+          `insertError=${insertError.message ?? JSON.stringify(insertError)}, ` +
+          `deleteError=${deleteError.message ?? JSON.stringify(deleteError)}`,
       );
       return jsonResponse(500, { error: "inconsistent_state" });
     }

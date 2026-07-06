@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/features/auth/application/sign_up_controller.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
 import 'package:foglm/features/auth/domain/validators.dart';
+import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:go_router/go_router.dart';
 
 const _snsProviderDisplayNames = {
@@ -73,7 +74,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     if (mounted) {
-      context.go('/verify-pending', extra: email);
+      context.go(
+        '/verify-pending',
+        extra: VerifyPendingArgs(email: email, password: password),
+      );
     }
   }
 

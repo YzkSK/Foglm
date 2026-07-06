@@ -29,9 +29,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/verify-pending',
-        builder: (context, state) => EmailVerificationPendingScreen(
-          email: state.extra as String? ?? '',
-        ),
+        builder: (context, state) {
+          final args = state.extra as VerifyPendingArgs?;
+          return EmailVerificationPendingScreen(
+            email: args?.email ?? '',
+            password: args?.password ?? '',
+          );
+        },
       ),
     ],
   );
