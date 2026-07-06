@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { isValidEmail, isValidPassword, localPartOf } from "./index.ts";
+import { isValidEmail, isValidPassword } from "./index.ts";
 
 Deno.test("isValidEmail accepts a well-formed address", () => {
   assertEquals(isValidEmail("foo@example.com"), true);
@@ -31,8 +31,4 @@ Deno.test("isValidPassword rejects passwords missing a lowercase letter", () => 
 
 Deno.test("isValidPassword rejects passwords missing a digit", () => {
   assertEquals(isValidPassword("Abcdefgh"), false);
-});
-
-Deno.test("localPartOf returns the part before @", () => {
-  assertEquals(localPartOf("foo@example.com"), "foo");
 });

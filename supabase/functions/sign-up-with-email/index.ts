@@ -11,10 +11,6 @@ export function isValidPassword(password: string): boolean {
   return PASSWORD_PATTERN.test(password);
 }
 
-export function localPartOf(email: string): string {
-  return email.split("@")[0];
-}
-
 interface SignUpRequestBody {
   email?: unknown;
   password?: unknown;
@@ -71,32 +67,6 @@ Deno.serve(async (req: Request) => {
 
   if (signUpError || !signUpData.user) {
     return jsonResponse(400, { error: "sign_up_failed" });
-  }
-
-  const { error: insertError } = await adminClient.from("users").insert({
-    id: signUpData.user.id,
-    auth_provider: "email",
-    email,
-    email_verified: false,
-    display_name: localPartOf(email),
-  });
-
-  if (insertError) {
-    const { error: deleteError } = await adminClient.auth.admin.deleteUser(
-      signUpData.user.id,
-    );
-
-    if (deleteError) {
-      console.error(
-        `Failed to compensate for public.users insert failure: ` +
-          `auth.users row ${signUpData.user.id} is now orphaned. ` +
-          `insertError=${insertError.message ?? JSON.stringify(insertError)}, ` +
-          `deleteError=${deleteError.message ?? JSON.stringify(deleteError)}`,
-      );
-      return jsonResponse(500, { error: "inconsistent_state" });
-    }
-
-    return jsonResponse(500, { error: "unknown" });
   }
 
   return jsonResponse(200, { success: true });
