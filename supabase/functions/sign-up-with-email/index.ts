@@ -82,6 +82,20 @@ Deno.serve(async (req: Request) => {
   });
 
   if (insertError) {
+    const { error: deleteError } = await adminClient.auth.admin.deleteUser(
+      signUpData.user.id,
+    );
+
+    if (deleteError) {
+      console.error(
+        `Failed to compensate for public.users insert failure: ` +
+          `auth.users row ${signUpData.user.id} is now orphaned. ` +
+          `insertError=${JSON.stringify(insertError)}, ` +
+          `deleteError=${JSON.stringify(deleteError)}`,
+      );
+      return jsonResponse(500, { error: "inconsistent_state" });
+    }
+
     return jsonResponse(500, { error: "unknown" });
   }
 
