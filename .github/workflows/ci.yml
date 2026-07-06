@@ -29,6 +29,14 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Upload golden test failure diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: '**/failures/**'
+          if-no-files-found: ignore
+
   deno-ci:
     runs-on: ubuntu-latest
     defaults:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
@@ -41,7 +42,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (context, state) => const _PlaceholderHome(),
       ),
+
       // '/signup', '/verify-pending' は別issueでUI実装時に追加する。
+      GoRoute(
+        path: '/camera',
+        builder: (context, state) => const CameraScreen(),
+      ),
     ],
   );
 });
@@ -51,8 +57,19 @@ class _PlaceholderHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Foglm')),
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Foglm'),
+            ElevatedButton(
+              onPressed: () => context.go('/camera'),
+              child: const Text('カメラ'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

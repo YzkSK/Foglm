@@ -12,7 +12,13 @@ class PushNotificationService {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await FirebaseMessaging.instance.requestPermission();
+    try {
+      await FirebaseMessaging.instance.requestPermission();
+    } on Exception catch (_) {
+      // 無料のApple ID(Personal Team)にはPush通知のentitlementが発行されず、
+      // requestPermission()が失敗しうる。通知が使えないだけでアプリ全体を
+      // 落とさないようにする。
+    }
   }
 
   static Future<String?> getToken() {
