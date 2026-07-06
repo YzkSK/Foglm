@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
-import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
-import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
@@ -43,20 +41,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (context, state) => const _PlaceholderHome(),
       ),
-      GoRoute(
-        path: '/signup',
-        builder: (context, state) => const SignUpScreen(),
-      ),
-      GoRoute(
-        path: '/verify-pending',
-        builder: (context, state) {
-          final args = state.extra as VerifyPendingArgs?;
-          return EmailVerificationPendingScreen(
-            email: args?.email ?? '',
-            password: args?.password ?? '',
-          );
-        },
-      ),
+      // '/signup', '/verify-pending' は別issueでUI実装時に追加する。
     ],
   );
 });
