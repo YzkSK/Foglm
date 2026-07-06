@@ -11,7 +11,7 @@ as $$
   select provider
   from auth.identities
   where provider in ('google', 'apple', 'x', 'instagram')
-    and identity_data ->> 'email' = lower(p_email)
+    and lower(identity_data ->> 'email') = lower(p_email)
   limit 1;
 $$;
 
