@@ -12,11 +12,14 @@ const allowedWhenUnauthenticatedPaths = {'/'};
 /// 未ログイン(または`public.users`に対応する行が存在しない)ユーザーが
 /// 許可リスト外の画面へ遷移しようとした場合、ログイン画面('/')へリダイレクトする
 /// (仕様書 3.1.1 / 6.1 sign_out参照)。
+/// `isLoading`が`true`の間(ユーザー情報の取得が未確定)は、未ログインと確定するまで
+/// リダイレクトを保留する(セッション復元中の認証済みユーザーを誤って弾かないため)。
 String? authRequiredRedirect({
   required PublicUserRow? user,
+  required bool isLoading,
   required String location,
 }) {
-  if (user != null) {
+  if (user != null || isLoading) {
     return null;
   }
   if (allowedWhenUnauthenticatedPaths.contains(location)) {
