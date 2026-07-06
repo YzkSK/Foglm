@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
+import 'package:foglm/features/auth/domain/password_reset_failure.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,6 +18,10 @@ abstract class AuthRepository {
   });
 
   Future<void> signOut();
+
+  Future<void> requestPasswordReset({required String email});
+
+  Future<void> resetPassword({required String newPassword});
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -65,6 +70,34 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<void> signOut() async {
     await _client.auth.signOut();
+  }
+
+  @override
+  Future<void> requestPasswordReset({required String email}) async {
+    try {
+      await _client.functions.invoke(
+        'request-password-reset',
+        body: {'email': email},
+      );
+    } on FunctionException catch (e) {
+      throw mapFunctionExceptionToPasswordResetFailure(e);
+    } on Object catch (_) {
+      throw const UnknownPasswordResetFailure();
+    }
+  }
+
+  @override
+  Future<void> resetPassword({required String newPassword}) async {
+    try {
+      await _client.functions.invoke(
+        'reset-password',
+        body: {'password': newPassword},
+      );
+    } on FunctionException catch (e) {
+      throw mapFunctionExceptionToPasswordResetFailure(e);
+    } on Object catch (_) {
+      throw const UnknownPasswordResetFailure();
+    }
   }
 }
 

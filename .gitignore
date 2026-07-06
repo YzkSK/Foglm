@@ -40,6 +40,7 @@ ios/Runner/GoogleService-Info.plist
 
 # Generated files
 *.g.dart
+*.freezed.dart
 
 # Golden test failure diffs (local-only debug output)
 **/failures/

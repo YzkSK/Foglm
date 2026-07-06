@@ -1,26 +1,10 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-export function isValidEmail(email: string): boolean {
-  return EMAIL_PATTERN.test(email);
-}
-
-export function isValidPassword(password: string): boolean {
-  return PASSWORD_PATTERN.test(password);
-}
+import { isValidEmail, isValidPassword } from "../_shared/validation.ts";
+import { jsonResponse } from "../_shared/http.ts";
 
 interface SignUpRequestBody {
   email?: unknown;
   password?: unknown;
-}
-
-function jsonResponse(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 Deno.serve(async (req: Request) => {
