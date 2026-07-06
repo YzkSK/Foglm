@@ -6,11 +6,31 @@ import 'package:foglm/features/auth/presentation/email_verification_pending_scre
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 import 'package:go_router/go_router.dart';
 
+/// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
+/// `GoRouter`の`redirect`を再評価させるための`Listenable`。
+class AuthRedirectRefreshNotifier extends ChangeNotifier {
+  AuthRedirectRefreshNotifier(Ref ref) {
+    ref.listen(currentPublicUserProvider, (previous, next) {
+      notifyListeners();
+    });
+  }
+}
+
+final authRedirectRefreshNotifierProvider =
+    Provider<AuthRedirectRefreshNotifier>((ref) {
+      final notifier = AuthRedirectRefreshNotifier(ref);
+      ref.onDispose(notifier.dispose);
+      return notifier;
+    });
+
 /// アプリ全体のルーティング定義の土台。
 /// 各画面(S01〜S13)は別Issueで追加していく。
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final refreshNotifier = ref.watch(authRedirectRefreshNotifierProvider);
+
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final user = ref.read(currentPublicUserProvider).value;
       return emailVerificationRedirect(
