@@ -1,26 +1,19 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+part 'sign_up_failure.freezed.dart';
+
 /// サインアップ失敗時のアプリ内エラー種別(仕様書 6.1 sign_up_with_email参照)。
-sealed class SignUpFailure implements Exception {
-  const SignUpFailure();
-}
+@freezed
+sealed class SignUpFailure with _$SignUpFailure implements Exception {
+  const factory SignUpFailure.invalidEmail() = InvalidEmailFailure;
 
-class InvalidEmailFailure extends SignUpFailure {
-  const InvalidEmailFailure();
-}
+  const factory SignUpFailure.weakPassword() = WeakPasswordFailure;
 
-class WeakPasswordFailure extends SignUpFailure {
-  const WeakPasswordFailure();
-}
+  const factory SignUpFailure.emailUsedBySns(String provider) =
+      EmailUsedBySnsFailure;
 
-class EmailUsedBySnsFailure extends SignUpFailure {
-  const EmailUsedBySnsFailure(this.provider);
-
-  final String provider;
-}
-
-class UnknownSignUpFailure extends SignUpFailure {
-  const UnknownSignUpFailure();
+  const factory SignUpFailure.unknown() = UnknownSignUpFailure;
 }
 
 /// Edge Function `sign-up-with-email`が返す`FunctionException`を
@@ -31,13 +24,13 @@ SignUpFailure mapFunctionExceptionToSignUpFailure(FunctionException e) {
 
   switch (errorCode) {
     case 'invalid_email':
-      return const InvalidEmailFailure();
+      return const SignUpFailure.invalidEmail();
     case 'weak_password':
-      return const WeakPasswordFailure();
+      return const SignUpFailure.weakPassword();
     case 'email_used_by_sns':
       final provider = details is Map ? details['provider'] as String? : null;
-      return EmailUsedBySnsFailure(provider ?? 'unknown');
+      return SignUpFailure.emailUsedBySns(provider ?? 'unknown');
     default:
-      return const UnknownSignUpFailure();
+      return const SignUpFailure.unknown();
   }
 }
