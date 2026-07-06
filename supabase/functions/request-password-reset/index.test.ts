@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { isValidEmail } from "./index.ts";
+import { isValidEmail } from "../_shared/validation.ts";
 
 Deno.test("isValidEmail accepts a well-formed address", () => {
   assertEquals(isValidEmail("foo@example.com"), true);

@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { isValidPassword } from "./index.ts";
+import { isValidPassword } from "../_shared/validation.ts";
 
 Deno.test("isValidPassword accepts 8+ chars with upper/lower/digit", () => {
   assertEquals(isValidPassword("Abcdefg1"), true);
