@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// アプリ全体のルーティング定義の土台。
@@ -12,6 +14,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (context, state) => const _PlaceholderHome(),
       ),
+      GoRoute(
+        path: '/camera',
+        builder: (context, state) => const CameraScreen(),
+      ),
     ],
   );
 });
@@ -21,8 +27,19 @@ class _PlaceholderHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Foglm')),
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Foglm'),
+            ElevatedButton(
+              onPressed: () => context.go('/camera'),
+              child: const Text('カメラ'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
