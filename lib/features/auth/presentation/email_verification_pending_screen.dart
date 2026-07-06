@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// `/verify-pending`ルートの`extra`として渡す引数。
 ///
@@ -68,6 +69,10 @@ class _EmailVerificationPendingScreenState
         context.go('/');
       } else {
         setState(() => _message = 'まだ確認が完了していません。メール内のリンクを確認してください。');
+      }
+    } on AuthException {
+      if (mounted) {
+        setState(() => _message = '確認状態の確認に失敗しました。時間をおいて再度お試しください。');
       }
     } finally {
       if (mounted) {

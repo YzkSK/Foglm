@@ -5,6 +5,7 @@ import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -101,4 +102,29 @@ void main() {
 
     expect(find.text('まだ確認が完了していません。メール内のリンクを確認してください。'), findsOneWidget);
   });
+
+  testWidgets(
+    'tapping confirmed shows a generic error on an unexpected auth failure',
+    (tester) async {
+      when(
+        () => repository.checkEmailVerifiedBySignIn(
+          email: 'foo@example.com',
+          password: 'Abcdefg1',
+        ),
+      ).thenThrow(
+        const AuthException('rate limited', code: 'over_request_rate_limit'),
+      );
+
+      await tester.pumpWidget(
+        _wrap(repository, email: 'foo@example.com', password: 'Abcdefg1'),
+      );
+      await tester.tap(find.byKey(const Key('confirmed_button')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('確認状態の確認に失敗しました。時間をおいて再度お試しください。'),
+        findsOneWidget,
+      );
+    },
+  );
 }
