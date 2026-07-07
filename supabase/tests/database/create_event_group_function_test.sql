@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(11);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000031');
@@ -70,6 +70,13 @@ select throws_ok(
   null,
   null,
   'create_event_group rejects end_date before start_date'
+);
+
+select throws_like(
+  $$ insert into public.groups (name, mode, start_date, end_date, created_by)
+     values ('Direct Insert', 'event', '2026-08-01', '2026-08-03', '00000000-0000-0000-0000-000000000031') $$,
+  '%permission denied for table groups%',
+  '認証済みユーザーはgroupsへ直接INSERTできない(create_event_group経由のみ)'
 );
 
 reset role;
