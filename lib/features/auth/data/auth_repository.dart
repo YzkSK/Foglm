@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
 import 'package:foglm/features/auth/domain/password_reset_failure.dart';
+import 'package:foglm/features/auth/domain/sign_in_failure.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,6 +17,13 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
+
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  });
+
+  Future<void> signInWithSns(OAuthProvider provider);
 
   Future<void> signOut();
 
@@ -64,6 +72,36 @@ class SupabaseAuthRepository implements AuthRepository {
         return false;
       }
       rethrow;
+    }
+  }
+
+  @override
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _client.auth.signInWithPassword(email: email, password: password);
+    } on AuthException catch (e) {
+      throw mapAuthExceptionToSignInFailure(e);
+    } on Object catch (_) {
+      throw const SignInFailure.unknown();
+    }
+    await _rejectIfAccountDeleted();
+  }
+
+  @override
+  Future<void> signInWithSns(OAuthProvider provider) async {
+    await _client.auth.signInWithOAuth(provider);
+  }
+
+  /// ログイン成立後、削除済みアカウント(`deleted_at`設定済み)であれば
+  /// 即座にサインアウトさせる(仕様書 3.1.3 / 6.1参照)。
+  Future<void> _rejectIfAccountDeleted() async {
+    final isDeleted = await _client.rpc<bool>('is_account_deleted');
+    if (isDeleted) {
+      await _client.auth.signOut();
+      throw const SignInFailure.deletedAccount();
     }
   }
 
