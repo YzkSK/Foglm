@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
+import 'package:foglm/features/auth/presentation/reset_password_screen.dart';
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -60,6 +61,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+
+      GoRoute(
         path: '/camera',
         builder: (context, state) => const CameraScreen(),
       ),
@@ -85,6 +91,10 @@ class _PlaceholderHome extends StatelessWidget {
             ElevatedButton(
               onPressed: () => context.go('/password-reset'),
               child: const Text('パスワードリセット'),
+            ),
+            ElevatedButton(
+              onPressed: () => context.go('/reset-password'),
+              child: const Text('新パスワード設定'),
             ),
           ],
         ),
