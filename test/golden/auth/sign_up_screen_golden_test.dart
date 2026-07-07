@@ -109,31 +109,4 @@ void main() {
       },
     ),
   );
-
-  unawaited(
-    goldenTest(
-      'SignUpScreen shows a confirmation message on success',
-      fileName: 'sign_up_screen_success',
-      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
-      pumpBeforeTest: (tester) async {
-        await _enterCredentials(
-          tester,
-          email: 'foo@example.com',
-          password: 'Abcdefg1',
-        );
-        await tester.tap(find.text('登録する'));
-        await tester.pumpAndSettle();
-      },
-      builder: () {
-        final repository = _MockAuthRepository();
-        when(
-          () => repository.signUpWithEmail(
-            email: 'foo@example.com',
-            password: 'Abcdefg1',
-          ),
-        ).thenAnswer((_) async {});
-        return _pumpApp(repository);
-      },
-    ),
-  );
 }

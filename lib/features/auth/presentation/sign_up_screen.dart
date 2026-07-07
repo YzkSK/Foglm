@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/features/auth/application/sign_up_controller.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
 import 'package:foglm/features/auth/domain/validators.dart';
+import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
+import 'package:go_router/go_router.dart';
 
 /// サインアップ画面(S01b)。
 ///
 /// メールアドレス・パスワードでの新規登録を行う(仕様書 3.1 / 4.1 S01b)。
-/// 登録成功後はメール確認待ち画面(S01c、#95)へ遷移する想定だが、
-/// そちらが未実装のため、本画面内で確認メール送信の案内を表示するに留める。
+/// 登録成功後はメール確認待ち画面(S01c)へ遷移する。
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
@@ -34,40 +35,45 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
+    final email = _emailController.text;
+    final password = _passwordController.text;
     setState(() => _hasSubmitted = true);
     await ref
         .read(signUpControllerProvider.notifier)
-        .submit(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
+        .submit(email: email, password: password);
+
+    if (!mounted) {
+      return;
+    }
+    final state = ref.read(signUpControllerProvider);
+    if (!state.hasError) {
+      context.go(
+        '/verify-pending',
+        extra: VerifyPendingArgs(email: email, password: password),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(signUpControllerProvider);
     final isLoading = state.isLoading;
-    // AsyncNotifier<void>はhasValueが常にtrueになる(直前の値を自動的に
-    // 引き継ぐため)ので、成功判定にはhasErrorの不在を使う。
-    final isSuccess = _hasSubmitted && !isLoading && !state.hasError;
 
     return Scaffold(
       appBar: AppBar(title: const Text('サインアップ')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: isSuccess
-              ? const _SignUpSuccessMessage()
-              : _SignUpForm(
-                  formKey: _formKey,
-                  emailController: _emailController,
-                  passwordController: _passwordController,
-                  isLoading: isLoading,
-                  errorMessage: _hasSubmitted && state.hasError
-                      ? signUpFailureMessage(state.error)
-                      : null,
-                  onSubmit: _submit,
-                ),
+          child: _SignUpForm(
+            formKey: _formKey,
+            emailController: _emailController,
+            passwordController: _passwordController,
+            isLoading: isLoading,
+            errorMessage: _hasSubmitted && state.hasError
+                ? signUpFailureMessage(state.error)
+                : null,
+            onSubmit: _submit,
+          ),
         ),
       ),
     );
@@ -171,28 +177,4 @@ String signUpFailureMessage(Object? error) {
           '${_providerDisplayName(provider)}でログインしてください',
     _ => '登録に失敗しました。時間をおいて再度お試しください',
   };
-}
-
-class _SignUpSuccessMessage extends StatelessWidget {
-  const _SignUpSuccessMessage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Icon(Icons.mail_outline, size: 48),
-        const SizedBox(height: 16),
-        Text(
-          '確認メールを送信しました',
-          style: Theme.of(context).textTheme.titleMedium,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'メール内のリンクをクリックして登録を完了してください',
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
 }
