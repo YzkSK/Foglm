@@ -1,5 +1,5 @@
 begin;
-select plan(3);
+select plan(4);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000051');
@@ -23,15 +23,19 @@ select throws_like(
   '認証済みユーザーは自分のdeleted_atを直接更新できない'
 );
 
-update public.users set display_name = 'Updated Name' where id = '00000000-0000-0000-0000-000000000051';
+select throws_like(
+  $$ update public.users set display_name = 'Updated Name' where id = '00000000-0000-0000-0000-000000000051' $$,
+  '%permission denied for table users%',
+  '認証済みユーザーはdisplay_nameを直接更新できない(update_profile経由のみ)'
+);
+
+select throws_like(
+  $$ update public.users set avatar_url = 'https://example.com/a.png' where id = '00000000-0000-0000-0000-000000000051' $$,
+  '%permission denied for table users%',
+  '認証済みユーザーはavatar_urlを直接更新できない(update_profile経由のみ)'
+);
 
 reset role;
-
-select is(
-  (select display_name from public.users where id = '00000000-0000-0000-0000-000000000051'),
-  'Updated Name',
-  'display_nameは引き続き自分で更新できる'
-);
 
 select * from finish();
 rollback;
