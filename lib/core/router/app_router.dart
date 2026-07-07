@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/router/auth_guard.dart';
+import 'package:foglm/features/auth/data/auth_state_listener.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/login_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
@@ -31,6 +32,9 @@ final authRedirectRefreshNotifierProvider =
 /// 各画面(S01〜S13)は別Issueで追加していく。
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = ref.watch(authRedirectRefreshNotifierProvider);
+  // アプリ起動中ずっと認証状態を監視させるため、ここでインスタンス化する
+  // (SNSログイン完了・削除済みアカウント判定の検知。詳細はdocコメント参照)。
+  ref.watch(authStateListenerProvider);
 
   return GoRouter(
     initialLocation: '/',
