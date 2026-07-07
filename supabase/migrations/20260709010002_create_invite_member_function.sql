@@ -22,7 +22,7 @@ begin
 
   select group_id into v_group_id
   from public.invite_codes
-  where code = btrim(p_code);
+  where code = upper(btrim(p_code));
 
   if v_group_id is null then
     raise exception 'invite_member: invalid invite code';
