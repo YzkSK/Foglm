@@ -7,6 +7,7 @@ const allowedWhenUnverifiedPaths = {
   '/',
   '/signup',
   '/verify-pending',
+  '/debug',
 };
 
 /// 未ログインでもアクセス可能なパス。ログイン必須の画面は今後の別issueで
@@ -15,6 +16,7 @@ const allowedWhenUnauthenticatedPaths = {
   '/',
   '/password-reset',
   '/reset-password',
+  '/debug',
 };
 
 /// 未ログイン(または`public.users`に対応する行が存在しない)ユーザーが

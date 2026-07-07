@@ -50,6 +50,15 @@ void main() {
       );
       expect(result, '/verify-pending');
     });
+
+    test('does not redirect an unverified user on the debug menu path', () {
+      const user = PublicUserRow(authProvider: 'email', emailVerified: false);
+      final result = emailVerificationRedirect(
+        user: user,
+        location: '/debug',
+      );
+      expect(result, isNull);
+    });
   });
 
   group('authRequiredRedirect', () {
@@ -92,5 +101,14 @@ void main() {
         expect(result, isNull);
       },
     );
+
+    test('does not redirect when already on the debug menu path', () {
+      final result = authRequiredRedirect(
+        user: null,
+        isLoading: false,
+        location: '/debug',
+      );
+      expect(result, isNull);
+    });
   });
 }
