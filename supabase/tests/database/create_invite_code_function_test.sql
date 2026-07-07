@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(10);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000031'), -- member
@@ -22,6 +22,7 @@ where id = '20000000-0000-0000-0000-000000000003';
 insert into public.group_members (group_id, user_id)
 values
   ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000031'),
+  ('20000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000031'),
   ('20000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000031');
 
 set local role authenticated;
@@ -49,11 +50,14 @@ select is(
   'invite code records the issuer'
 );
 
-select throws_ok(
+select lives_ok(
   $$ select public.create_invite_code('20000000-0000-0000-0000-000000000002') $$,
-  null,
-  null,
-  'create_invite_code rejects an event group (mode<>group)'
+  'active member can issue an invite code for an event group too (S05 is shared between group/event)'
+);
+
+select isnt_empty(
+  $$ select 1 from public.invite_codes where group_id = '20000000-0000-0000-0000-000000000002' $$,
+  'create_invite_code creates a row for the event group'
 );
 
 select throws_ok(

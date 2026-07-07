@@ -1,4 +1,6 @@
--- create_invite_code: 固定グループ(mode=group)の招待コードを発行するRPC(仕様書 3.2/6.2 create_invite_code参照)。
+-- create_invite_code: 固定グループ(mode=group)・イベントグループ(mode=event)共通の招待コードを
+-- 発行するRPC(仕様書 3.2/3.11/4.1 S05/6.2 create_invite_code参照)。招待リンク・コードの発行画面(S05)は
+-- 両モード共通のため、この関数もmodeを問わず発行を許可する。
 -- 現役メンバー全員が実行可能(作成者限定にしない)。既発行済みの場合はinvite_codesの既存行をUPSERTして
 -- 新しいコードに置き換える。invite_codesへの直接INSERT/UPDATEはRLSで許可していないため、
 -- 発行操作は必ずこの関数(security definer)を経由する。
@@ -19,8 +21,8 @@ begin
 
   select * into v_group from public.groups where id = p_group_id;
 
-  if v_group.id is null or v_group.mode <> 'group' then
-    raise exception 'create_invite_code: fixed group not found';
+  if v_group.id is null or v_group.mode not in ('group', 'event') then
+    raise exception 'create_invite_code: group not found';
   end if;
 
   if v_group.status <> 'active' then
