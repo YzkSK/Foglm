@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/widgets/form_status_text.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// `/verify-pending`ルートの`extra`として渡す引数。
 ///
@@ -59,7 +59,9 @@ class _EmailVerificationPendingScreenState
           _isMessageError = false;
         });
       }
-    } on AuthException {
+    } on Object catch (_) {
+      // AuthException(レート制限等)に限らず、通信エラー等も含めて
+      // 必ずユーザーに結果を伝える(エラーを握り潰さない)。
       if (mounted) {
         setState(() {
           _message = '確認メールの再送に失敗しました。時間をおいて再度お試しください';
@@ -97,7 +99,9 @@ class _EmailVerificationPendingScreenState
           _isMessageError = true;
         });
       }
-    } on AuthException {
+    } on Object catch (_) {
+      // AuthExceptionに限らず、通信エラー等も含めて必ずユーザーに結果を伝える
+      // (エラーを握り潰さない)。
       if (mounted) {
         setState(() {
           _message = '確認状態の確認に失敗しました。時間をおいて再度お試しください';
@@ -113,6 +117,32 @@ class _EmailVerificationPendingScreenState
 
   @override
   Widget build(BuildContext context) {
+    // '/verify-pending'への直接アクセス・ディープリンク・再起動等でextraが
+    // 渡されなかった場合、email/passwordが空文字になる(app_router.dart参照)。
+    // その状態のまま再送・再サインインを試みてもエラーになるだけなので、
+    // サインアップへ案内する専用の表示にする。
+    if (widget.email.isEmpty || widget.password.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('メール確認待ち')),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('このページには直接アクセスできません。サインアップからやり直してください。'),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => context.go('/signup'),
+                  child: const Text('サインアップ画面へ'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('メール確認待ち')),
       body: SafeArea(
@@ -125,15 +155,7 @@ class _EmailVerificationPendingScreenState
                 '${widget.email} 宛に確認メールを送信しました。'
                 '\nメール内のリンクを開いて確認を完了してください。',
               ),
-              if (_message != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _message!,
-                  style: _isMessageError
-                      ? TextStyle(color: Theme.of(context).colorScheme.error)
-                      : null,
-                ),
-              ],
+              FormStatusText(message: _message, isError: _isMessageError),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isBusy ? null : _resend,

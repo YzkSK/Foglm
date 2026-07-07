@@ -26,6 +26,7 @@ Widget _pumpApp(
         ),
       ),
       GoRoute(path: '/', builder: (context, state) => const Text('home')),
+      GoRoute(path: '/signup', builder: (context, state) => const Text('signup')),
     ],
   );
 
@@ -149,4 +150,30 @@ void main() {
       expect(find.text('確認状態の確認に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'shows a guidance message and no action buttons when email/password are '
+    'missing',
+    (tester) async {
+      await tester.pumpWidget(_pumpApp(repository, email: '', password: ''));
+
+      expect(
+        find.text('このページには直接アクセスできません。サインアップからやり直してください。'),
+        findsOneWidget,
+      );
+      expect(find.text('確認メールを再送する'), findsNothing);
+      expect(find.text('確認した'), findsNothing);
+    },
+  );
+
+  testWidgets('navigates to signup when email/password are missing', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_pumpApp(repository, email: '', password: ''));
+
+    await tester.tap(find.text('サインアップ画面へ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('signup'), findsOneWidget);
+  });
 }
