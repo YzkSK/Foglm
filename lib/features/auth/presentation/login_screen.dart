@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,6 +38,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submitEmail() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
+      // バリデーションエラー時は前回のサインインエラー表示を消し、
+      // 新しいバリデーションエラーだけが見えるようにする。
+      setState(() => _hasSubmitted = false);
       return;
     }
     setState(() => _hasSubmitted = true);
@@ -56,19 +61,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentPublicUserProvider);
 
+    if (userAsync.hasError) {
+      // currentPublicUserProviderの取得失敗を握り潰さず、ログインフォーム
+      // にフォールバックする前に必ず記録する。
+      developer.log(
+        'currentPublicUserProvider failed to load',
+        name: 'LoginScreen',
+        error: userAsync.error,
+        stackTrace: userAsync.stackTrace,
+      );
+    }
+
+    final user = userAsync.value;
+    final Widget body;
+    if (user != null) {
+      body = const _LoggedInPlaceholder();
+    } else if (userAsync.isLoading && !userAsync.hasValue) {
+      // 初回取得中のみスピナーを表示する。バックグラウンドでの再取得中は
+      // 直前の値(ログインフォーム)を保持し、入力中の内容が消えないようにする。
+      body = const Center(child: CircularProgressIndicator());
+    } else {
+      body = _buildLoginForm();
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Foglm')),
-      body: SafeArea(
-        child: switch (userAsync) {
-          AsyncData(:final value) when value != null =>
-            const _LoggedInPlaceholder(),
-          AsyncError() => _buildLoginForm(),
-          _ when userAsync.isLoading => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          _ => _buildLoginForm(),
-        },
-      ),
+      body: SafeArea(child: body),
     );
   }
 
