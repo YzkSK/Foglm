@@ -44,6 +44,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
+      // バリデーションエラー時は前回のサーバーエラー表示を消し、
+      // 新しいバリデーションエラーだけが見えるようにする。
+      setState(() => _hasSubmitted = false);
       return;
     }
     setState(() => _hasSubmitted = true);

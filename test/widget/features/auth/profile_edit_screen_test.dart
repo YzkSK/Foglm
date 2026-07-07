@@ -139,4 +139,31 @@ void main() {
 
     expect(find.text('プロフィールの更新に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
   });
+
+  testWidgets(
+    'clears the stale server error when a later submit fails validation',
+    (tester) async {
+      when(
+        () => repository.updateProfile(displayName: 'New Name'),
+      ).thenThrow(Exception('unexpected'));
+
+      await pumpScreen(tester);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'New Name');
+      await tester.tap(find.text('保存する'));
+      await tester.pumpAndSettle();
+      expect(find.text('プロフィールの更新に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField).at(0), '   ');
+      await tester.tap(find.text('保存する'));
+      await tester.pump();
+
+      expect(find.text('ニックネームを入力してください'), findsOneWidget);
+      expect(
+        find.text('プロフィールの更新に失敗しました。時間をおいて再度お試しください'),
+        findsNothing,
+      );
+    },
+  );
 }
