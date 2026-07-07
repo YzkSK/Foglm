@@ -1,5 +1,5 @@
 begin;
-select plan(5);
+select plan(6);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000061'),
@@ -45,6 +45,16 @@ select throws_like(
   $$ select public.update_profile('   ', null) $$,
   '%display_name must not be blank%',
   '空白のみのニックネームは拒否される'
+);
+
+reset role;
+
+set local role anon;
+
+select throws_like(
+  $$ select public.update_profile('Anon Name', null) $$,
+  '%permission denied for function update_profile%',
+  'anonロールはupdate_profileを実行できない'
 );
 
 reset role;
