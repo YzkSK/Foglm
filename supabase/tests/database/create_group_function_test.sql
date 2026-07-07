@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(9);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000021');
@@ -55,6 +55,13 @@ select throws_ok(
   null,
   null,
   'create_group rejects a whitespace-only name'
+);
+
+select throws_like(
+  $$ insert into public.groups (name, mode, created_by)
+     values ('Direct Insert', 'group', '00000000-0000-0000-0000-000000000021') $$,
+  '%permission denied for table groups%',
+  '認証済みユーザーはgroupsへ直接INSERTできない(create_group経由のみ)'
 );
 
 reset role;
