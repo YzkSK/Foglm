@@ -52,13 +52,13 @@ select is_empty(
   'user A cannot see group 2'
 );
 
-update public.users set display_name = 'hacked' where id = '00000000-0000-0000-0000-000000000012';
+update public.users set fcm_token = 'hacked' where id = '00000000-0000-0000-0000-000000000012';
 
 reset role;
 
 select is(
-  (select display_name from public.users where id = '00000000-0000-0000-0000-000000000012'),
-  'Member B',
+  (select fcm_token from public.users where id = '00000000-0000-0000-0000-000000000012'),
+  null,
   'user A cannot update user B profile'
 );
 
