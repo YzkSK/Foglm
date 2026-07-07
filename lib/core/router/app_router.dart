@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
-import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
+import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 
