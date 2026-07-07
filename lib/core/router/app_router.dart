@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:foglm/core/config/env.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
@@ -7,6 +8,7 @@ import 'package:foglm/features/auth/presentation/reset_password_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 
 import 'package:foglm/features/camera/camera_screen.dart';
+import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
@@ -32,7 +34,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = ref.watch(authRedirectRefreshNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: Env.isDevProfile ? '/debug' : '/',
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final userAsync = ref.read(currentPublicUserProvider);
@@ -76,6 +78,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/camera',
         builder: (context, state) => const CameraScreen(),
       ),
+
+      if (Env.isDevProfile)
+        GoRoute(
+          path: '/debug',
+          builder: (context, state) => const DebugMenuScreen(),
+        ),
     ],
   );
 });
