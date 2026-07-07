@@ -7,7 +7,8 @@ const allowedWhenUnverifiedPaths = {'/', '/signup', '/verify-pending'};
 
 /// 未ログインでもアクセス可能なパス。ログイン必須の画面は今後の別issueで
 /// 追加され次第、この一覧に含めない(=自動的にガード対象になる)想定。
-const allowedWhenUnauthenticatedPaths = {'/', '/signup'};
+
+const allowedWhenUnauthenticatedPaths = {'/', '/signup', '/password-reset'};
 
 /// 未ログイン(または`public.users`に対応する行が存在しない)ユーザーが
 /// 許可リスト外の画面へ遷移しようとした場合、ログイン画面('/')へリダイレクトする
