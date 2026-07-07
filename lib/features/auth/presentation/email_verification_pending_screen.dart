@@ -59,6 +59,13 @@ class _EmailVerificationPendingScreenState
           _isMessageError = false;
         });
       }
+    } on AuthException {
+      if (mounted) {
+        setState(() {
+          _message = '確認メールの再送に失敗しました。時間をおいて再度お試しください';
+          _isMessageError = true;
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isBusy = false);

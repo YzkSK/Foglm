@@ -69,6 +69,27 @@ void main() {
     expect(find.text('確認メールを再送しました'), findsOneWidget);
   });
 
+  testWidgets('tapping resend shows an error message when it fails', (
+    tester,
+  ) async {
+    when(
+      () => repository.resendVerificationEmail(email: 'foo@example.com'),
+    ).thenThrow(
+      const AuthException(
+        'rate limited',
+        code: 'over_email_send_rate_limit',
+      ),
+    );
+
+    await tester.pumpWidget(
+      _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
+    );
+    await tester.tap(find.text('確認メールを再送する'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('確認メールの再送に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
+  });
+
   testWidgets('tapping confirmed navigates home when verified', (
     tester,
   ) async {
