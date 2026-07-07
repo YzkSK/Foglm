@@ -94,7 +94,7 @@ class _PlaceholderHome extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () => context.go('/password-reset'),
-                child: const Text('パスワードリセット'),
+              child: const Text('パスワードリセット'),
             ),
           ],
         ),
