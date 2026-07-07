@@ -50,11 +50,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       return;
     }
     setState(() => _hasSubmitted = true);
+    final displayName = _displayNameController.text.trim();
     final avatarUrl = _avatarUrlController.text.trim();
     await ref
         .read(updateProfileControllerProvider.notifier)
         .submit(
-          displayName: _displayNameController.text,
+          displayName: displayName,
           avatarUrl: avatarUrl.isEmpty ? null : avatarUrl,
         );
 

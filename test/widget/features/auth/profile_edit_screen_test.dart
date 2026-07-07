@@ -97,6 +97,25 @@ void main() {
     expect(find.text('プロフィールを更新しました'), findsOneWidget);
   });
 
+  testWidgets('trims leading/trailing whitespace before submitting', (
+    tester,
+  ) async {
+    when(
+      () => repository.updateProfile(displayName: 'New Name'),
+    ).thenAnswer((_) async {});
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).at(0), '  New Name  ');
+    await tester.tap(find.text('保存する'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repository.updateProfile(displayName: 'New Name'),
+    ).called(1);
+  });
+
   testWidgets('passes null avatarUrl when the field is cleared', (
     tester,
   ) async {
