@@ -1,5 +1,5 @@
 begin;
-select plan(7);
+select plan(8);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000021');
@@ -48,6 +48,13 @@ select throws_ok(
   null,
   null,
   'create_group rejects a null name'
+);
+
+select throws_ok(
+  $$ select public.create_group('　　　') $$,
+  null,
+  null,
+  'create_group rejects a whitespace-only name'
 );
 
 reset role;
