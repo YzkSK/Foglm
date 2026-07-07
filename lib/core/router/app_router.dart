@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -54,6 +55,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // '/signup', '/verify-pending' は別issueでUI実装時に追加する。
       GoRoute(
+        path: '/password-reset',
+        builder: (context, state) => const PasswordResetRequestScreen(),
+      ),
+
+      GoRoute(
         path: '/camera',
         builder: (context, state) => const CameraScreen(),
       ),
@@ -75,6 +81,10 @@ class _PlaceholderHome extends StatelessWidget {
             ElevatedButton(
               onPressed: () => context.go('/camera'),
               child: const Text('カメラ'),
+            ),
+            ElevatedButton(
+              onPressed: () => context.go('/password-reset'),
+              child: const Text('パスワードリセット'),
             ),
           ],
         ),
