@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(12);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000031');
@@ -49,6 +49,13 @@ select throws_ok(
   null,
   null,
   'create_event_group rejects a null name'
+);
+
+select throws_ok(
+  $$ select public.create_event_group('　　　', '2026-08-01', '2026-08-03') $$,
+  null,
+  null,
+  'create_event_group rejects a whitespace-only name'
 );
 
 select throws_ok(
