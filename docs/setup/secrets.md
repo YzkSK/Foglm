@@ -30,6 +30,8 @@ dev/prodなど環境を分ける場合は `dart_define.dev.json` / `dart_define.
 
 > ローカルのSupabase開発環境を使う場合は、上記の手動コピー・編集を`tool/supabase_start.dart`([docs/setup/supabase.md](./supabase.md)参照)が自動化し、`SUPABASE_URL`/`SUPABASE_ANON_KEY`にローカル開発用の値を自動で設定する。実際の(クラウド)Supabaseプロジェクトを参照する場合は、引き続き上記の手動フローを使う。
 
+devプロファイル限定のデバッグ用画面については[debug-menu.md](./debug-menu.md)を参照。
+
 ## 3. Supabase Edge Functionsのシークレット
 
 サーバー側のみで使うシークレット(例: FCMサービスアカウント)は`supabase secrets set`で登録し、コード・リポジトリには含めない。
