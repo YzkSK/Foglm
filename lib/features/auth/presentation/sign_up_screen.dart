@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/widgets/form_status_text.dart';
 import 'package:foglm/features/auth/application/sign_up_controller.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
 import 'package:foglm/features/auth/domain/validators.dart';
@@ -33,6 +34,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
+      // バリデーションエラー時は前回のサーバーエラー表示を消し、
+      // 新しいバリデーションエラーだけが見えるようにする。
+      setState(() => _hasSubmitted = false);
       return;
     }
     final email = _emailController.text;
@@ -133,13 +137,7 @@ class _SignUpForm extends StatelessWidget {
               return null;
             },
           ),
-          if (errorMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              errorMessage!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ],
+          FormStatusText(message: errorMessage),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: isLoading ? null : onSubmit,
