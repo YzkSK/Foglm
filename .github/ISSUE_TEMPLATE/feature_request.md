@@ -17,3 +17,9 @@ assignees: ''
 
 ## 補足
 <!-- 参考リンク、画面イメージなどがあれば -->
+
+## 画面(UI)を伴う場合のチェック
+<!-- docs/spec.md の画面(S01〜S13等)を実装する場合のみ。UIを伴わない場合はこのセクションごと削除してOK -->
+- [ ] 対象画面の Screen 単位 Golden Test (`*_screen_golden_test.dart`) を追加する
+- [ ] 画面内の再利用可能な Widget のうち、状態パターンを持つものは Widget 単位の Golden Test も追加する
+- [ ] 詳細は `docs/testing-policy.md` の「Golden Test」節を参照
