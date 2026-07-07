@@ -43,3 +43,47 @@
   - golden画像の生成・更新: `flutter test --update-goldens`
   - Golden Testのみ実行: `flutter test --tags golden`
 - CIでは`flutter test`実行時にgoldenの差分があれば通常のテスト失敗として検知される。失敗時は比較用の差分画像(`failures/`配下)をArtifactとしてアップロードする。
+
+### 対象レイヤーと必須ルール
+
+Golden Testは以下の2レイヤーに分け、**画面(Screen)を実装するIssueでは両方を揃えることを必須**とする(Widget単位のテストのみで画面全体が未検証のまま、という漏れを防ぐため)。
+
+| レイヤー | 対象 | 配置例 | 必須タイミング |
+|---|---|---|---|
+| Widget単位 | ボタン・カード・リスト項目など、画面内の個別コンポーネント | `test/golden/<feature>/<widget_name>_golden_test.dart` | 再利用可能なWidgetを新規作成した時 |
+| Screen単位 | `docs/spec.md`の画面一覧(S01〜S13など)に対応する画面全体 | `test/golden/<feature>/<screen_name>_screen_golden_test.dart` | 画面(Screen)を実装・`GoRoute`に追加した時 |
+
+- 新しい画面を実装するPRでは、その画面に対応する`*_screen_golden_test.dart`を**必ず追加**する。Widget単位のgoldenだけを追加して画面単位を省略しない。
+- 逆に、画面単位のgoldenだけでは個々のコンポーネントの状態網羅が難しいため、状態パターンが複数ある部品(ボタンの有効/無効など)はWidget単位でも分けて検証する。
+
+### 状態パターンの網羅
+
+1画面・1コンポーネントにつき、該当する状態は`GoldenTestGroup` / `GoldenTestScenario`(または`goldenTest`を複数呼ぶ)でまとめて1つのgolden画像に網羅する。最低限、以下の観点で該当するものをチェックする。
+
+- **ローディング状態**: データ取得中(`AsyncLoading`)の表示
+- **エラー状態**: データ取得失敗・権限エラーなど(`AsyncError`)の表示
+- **空状態(empty)**: 一覧系画面でデータが0件の場合の表示
+- **通常状態(success)**: データがある場合の表示(件数が少ない/多いなど、レイアウト崩れが起きうる境界も可能な範囲で)
+- **入力・操作系のバリエーション**: フォームのバリデーションエラー表示、ボタンの有効/無効など
+- 上記のうち画面の性質上存在しない状態(例: フォームがない画面のバリデーションエラー)は対象外でよい。
+
+### サイズ・制約(constraints)
+
+- `constraints`は対象画面が実際に使われる代表的なスマートフォンサイズを基準にする(既存の`CameraScreen`・`FoglmApp`のgoldenに合わせ、特別な理由がなければ`maxWidth: 400, maxHeight: 800`を既定値とする)。
+- スクロールが発生する画面(一覧・アルバムなど)で内容が`maxHeight`に収まらない場合は、`constraints`を広げるか、代表的な件数のみを切り出すなど、画面の実装内容に応じて判断する。
+
+### 命名規則
+
+- ファイル名: `<screen_or_widget_name>_golden_test.dart`(例: `camera_screen_golden_test.dart`, `shutter_button_golden_test.dart`)
+- `fileName`引数はスネークケースでファイル名と対応させる(例: `fileName: 'login_screen'`)。
+- 状態ごとに複数の`GoldenTestScenario`を使う場合、`name`は「状態が分かる日本語 or 英語」で簡潔に(例: `'ローディング中'`, `'空状態'`)。
+
+### 画面実装時のチェックリスト
+
+`docs/spec.md`の画面(S01〜S13等)を実装するPRでは、レビュー前に以下を確認する。
+
+- [ ] 対象画面の`*_screen_golden_test.dart`を`test/golden/<feature>/`配下に追加した
+- [ ] 画面が取りうる主要な状態(ローディング/エラー/空/通常など、該当するもの)を`GoldenTestGroup`でまとめて網羅した
+- [ ] 画面内の再利用可能なWidgetのうち、状態パターンを持つものはWidget単位のgoldenでも検証した
+- [ ] `flutter test --update-goldens`でgolden画像を生成し、意図した見た目になっていることを目視確認した
+- [ ] `flutter test`でgoldenの差分検知が通ることを確認した
