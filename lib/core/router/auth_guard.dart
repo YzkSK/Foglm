@@ -6,7 +6,7 @@ import 'package:foglm/features/auth/domain/public_user.dart';
 const allowedWhenUnverifiedPaths = {
   '/',
   '/signup',
-  '/verify-pending'
+  '/verify-pending',
 };
 
 /// 未ログインでもアクセス可能なパス。ログイン必須の画面は今後の別issueで
