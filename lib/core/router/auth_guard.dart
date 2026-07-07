@@ -3,12 +3,19 @@ import 'package:foglm/features/auth/domain/public_user.dart';
 /// メール・パスワード方式かつ未確認のユーザーでも遷移を許可するパス。
 /// 撮影・投票・アルバム閲覧などの主要機能画面は今後の別issueで追加され次第、
 /// この一覧に含めない(=自動的にガード対象になる)想定。
-const allowedWhenUnverifiedPaths = {'/', '/signup', '/verify-pending'};
+const allowedWhenUnverifiedPaths = {
+  '/',
+  '/signup',
+  '/verify-pending',
+};
 
 /// 未ログインでもアクセス可能なパス。ログイン必須の画面は今後の別issueで
 /// 追加され次第、この一覧に含めない(=自動的にガード対象になる)想定。
-
-const allowedWhenUnauthenticatedPaths = {'/', '/signup', '/password-reset'};
+const allowedWhenUnauthenticatedPaths = {
+  '/',
+  '/password-reset',
+  '/reset-password',
+};
 
 /// 未ログイン(または`public.users`に対応する行が存在しない)ユーザーが
 /// 許可リスト外の画面へ遷移しようとした場合、ログイン画面('/')へリダイレクトする
