@@ -258,7 +258,7 @@ S01 ログイン
 | ※ **DB側（PostgreSQLのBEFORE INSERT OR UPDATEトリガー）**で、`left_at` が NULL になる操作（新規参加・再参加のどちらも含む）の直前に該当 `group_id` の `left_at IS NULL` のメンバー数をカウントし、6件を超える場合は例外を発生させて登録・再参加を拒否する。アプリ側のチェックは補助的なもの（早い段階でのエラー表示用）とし、最終的な制約はDB側で担保する |||
 
 #### `invite_codes`
-※ `mode=group`（固定グループ）の招待コード発行を表す。1グループにつき有効なコードは常に1件のみとし、`invite_member` はこのテーブルから `group_id` を解決する
+※ 固定グループ（`mode=group`）・イベントグループ（`mode=event`）共通の招待コード発行を表す。1グループにつき有効なコードは常に1件のみとし、`invite_member`／`join_event_group` はこのテーブルから `group_id` を解決する
 
 | カラム | 型 | 説明 |
 |---|---|---|
@@ -395,7 +395,7 @@ S01 ログイン
 | `ensure_solo_space`（trigger） | Edge Function | ユーザーの初回サインアップ完了時に自動実行。`mode=solo` の個人用グループを1件作成し、本人を group_members に登録する |
 | `create_group` | RPC | 固定グループ（`mode=group`）を作成し、作成者を group_members に登録 |
 | `invite_member` | RPC | 固定グループ（`mode=group`）へ招待コードからメンバーを追加（人数上限6人は `group_members` のDBトリガーで最終的に担保）。招待コードは `invite_codes` テーブルの `code` から `group_id` を解決する。**過去に脱退したことがある人が再度参加する場合は、既存の `group_members` 行を UPSERT（`left_at` を NULL に更新）する** |
-| `create_invite_code` | RPC | 固定グループ（`mode=group`）の招待コードを発行する。メンバー全員が実行可能（3.2参照）。既に発行済みの場合は `invite_codes` の既存行を UPSERT して新しいコードに置き換える |
+| `create_invite_code` | RPC | 固定グループ（`mode=group`）・イベントグループ（`mode=event`）共通の招待コードを発行する（招待画面S05は両モード共通、4.1参照）。現役メンバー全員が実行可能（3.2参照）。既に発行済みの場合は `invite_codes` の既存行を UPSERT して新しいコードに置き換える |
 | `create_event_group` | RPC | イベントグループ（`mode=event`）を、開始日・終了日を指定して作成し、作成者を group_members に登録する。アプリ利用者であれば誰でも作成可能 |
 | `join_event_group` | RPC | 招待リンクからイベントグループへ参加（人数上限6人は `group_members` のDBトリガーで最終的に担保。固定グループのメンバーである必要はない）。**過去に脱退したことがある人が再度参加する場合は、既存の `group_members` 行を UPSERT（`left_at` を NULL に更新）する** |
 | `archive_expired_events`（cron） | Edge Function | 毎日実行。`end_date` を過ぎた `mode=event` のグループを `status=archived` に更新し、新規の撮影・投票を禁止する（現像待ちのスケジュールには影響しない） |
