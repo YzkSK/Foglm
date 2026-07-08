@@ -13,6 +13,7 @@ import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
+import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';
 import 'package:foglm/features/groups/presentation/create_group_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -105,6 +106,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/groups/new',
         builder: (context, state) => const CreateGroupScreen(),
+      ),
+
+      GoRoute(
+        path: '/groups/new-event',
+        builder: (context, state) => const CreateEventGroupScreen(),
       ),
 
       if (Env.isDevProfile)
