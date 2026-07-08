@@ -26,7 +26,10 @@ Widget _pumpApp(
         ),
       ),
       GoRoute(path: '/', builder: (context, state) => const Text('home')),
-      GoRoute(path: '/signup', builder: (context, state) => const Text('signup')),
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const Text('signup'),
+      ),
     ],
   );
 
