@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/utils/date_formatting.dart';
 import 'package:foglm/features/groups/application/create_event_group_controller.dart';
 import 'package:go_router/go_router.dart';
 
-String _formatDate(DateTime date) {
-  final year = date.year.toString().padLeft(4, '0');
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-  return '$year/$month/$day';
-}
+/// イベント作成画面から選択可能な日付の範囲(今日から何日先まで)。
+const _maxEventStartDateDaysAhead = 365;
 
 /// イベントグループ作成画面(S04b)。
 ///
@@ -45,11 +42,12 @@ class _CreateEventGroupScreenState
       context: context,
       initialDate: _startDate ?? now,
       firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: _maxEventStartDateDaysAhead)),
     );
-    if (picked != null) {
-      setState(() => _startDate = picked);
+    if (!mounted || picked == null) {
+      return;
     }
+    setState(() => _startDate = picked);
   }
 
   Future<void> _pickEndDate() async {
@@ -58,11 +56,12 @@ class _CreateEventGroupScreenState
       context: context,
       initialDate: _endDate ?? _startDate ?? now,
       firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: _maxEventStartDateDaysAhead)),
     );
-    if (picked != null) {
-      setState(() => _endDate = picked);
+    if (!mounted || picked == null) {
+      return;
     }
+    setState(() => _endDate = picked);
   }
 
   Future<void> _submit() async {
@@ -139,7 +138,7 @@ class _CreateEventGroupScreenState
                   child: Text(
                     _startDate == null
                         ? '開始日を選択'
-                        : '開始日: ${_formatDate(_startDate!)}',
+                        : '開始日: ${formatDateOnly(_startDate!, separator: '/')}',
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -148,7 +147,7 @@ class _CreateEventGroupScreenState
                   child: Text(
                     _endDate == null
                         ? '終了日を選択'
-                        : '終了日: ${_formatDate(_endDate!)}',
+                        : '終了日: ${formatDateOnly(_endDate!, separator: '/')}',
                   ),
                 ),
                 if (_dateError != null) ...[
