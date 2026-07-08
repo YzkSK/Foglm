@@ -20,15 +20,19 @@ class AppTheme {
           onSurface: AppColors.textDark,
         );
 
-    final textTheme = GoogleFonts.poppinsTextTheme().copyWith(
-      displayLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-      displayMedium: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-      displaySmall: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-      headlineLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-      headlineMedium: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-      headlineSmall: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-      titleLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
-    );
+    final textTheme = GoogleFonts.poppinsTextTheme()
+        // titleMedium・bodyLarge等も含めた全スタイルにtextDarkを適用する
+        // (display/headline/titleLargeは直後にAlfa Slab Oneで上書きされる)。
+        .apply(bodyColor: AppColors.textDark, displayColor: AppColors.textDark)
+        .copyWith(
+          displayLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+          displayMedium: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+          displaySmall: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+          headlineLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+          headlineMedium: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+          headlineSmall: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+          titleLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
+        );
 
     return ThemeData(
       useMaterial3: true,

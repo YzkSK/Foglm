@@ -44,5 +44,20 @@ void main() {
         expect(buttonStyle?.shape?.resolve({}), isA<StadiumBorder>());
       },
     );
+
+    testWidgets(
+      'applies textDark to body/title/label styles not overridden with '
+      'Alfa Slab One',
+      (tester) async {
+        final textTheme = AppTheme.light.textTheme;
+
+        expect(textTheme.titleMedium?.color, AppColors.textDark);
+        expect(textTheme.titleSmall?.color, AppColors.textDark);
+        expect(textTheme.bodyLarge?.color, AppColors.textDark);
+        expect(textTheme.bodyMedium?.color, AppColors.textDark);
+        expect(textTheme.bodySmall?.color, AppColors.textDark);
+        expect(textTheme.labelLarge?.color, AppColors.textDark);
+      },
+    );
   });
 }
