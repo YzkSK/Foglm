@@ -7,6 +7,7 @@ import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:foglm/features/auth/presentation/login_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
+import 'package:foglm/features/auth/presentation/profile_edit_screen.dart';
 import 'package:foglm/features/auth/presentation/reset_password_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 
@@ -94,6 +95,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/camera',
         builder: (context, state) => const CameraScreen(),
+      ),
+
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileEditScreen(),
       ),
 
       GoRoute(
