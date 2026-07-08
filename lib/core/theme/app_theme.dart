@@ -8,16 +8,17 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get light {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-    ).copyWith(
-      primary: AppColors.primary,
-      onPrimary: AppColors.textLight,
-      secondary: AppColors.accent,
-      onSecondary: AppColors.textLight,
-      surface: AppColors.surface,
-      onSurface: AppColors.textDark,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+        ).copyWith(
+          primary: AppColors.primary,
+          onPrimary: AppColors.textLight,
+          secondary: AppColors.accent,
+          onSecondary: AppColors.textLight,
+          surface: AppColors.surface,
+          onSurface: AppColors.textDark,
+        );
 
     final textTheme = GoogleFonts.poppinsTextTheme().copyWith(
       displayLarge: GoogleFonts.alfaSlabOne(color: AppColors.textDark),
