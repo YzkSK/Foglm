@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(12);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000031'), -- member
@@ -38,16 +38,30 @@ select isnt_empty(
   'create_invite_code creates a row for the group'
 );
 
-select results_eq(
-  $$ select count(*)::int from public.invite_codes where group_id = '20000000-0000-0000-0000-000000000001' $$,
-  $$ values (1) $$,
-  're-issuing replaces the existing row instead of adding a new one (setup for next check)'
-);
-
 select is(
   (select created_by from public.invite_codes where group_id = '20000000-0000-0000-0000-000000000001'),
   '00000000-0000-0000-0000-000000000031'::uuid,
   'invite code records the issuer'
+);
+
+create temporary table invite_code_before as
+select code from public.invite_codes where group_id = '20000000-0000-0000-0000-000000000001';
+
+select lives_ok(
+  $$ select public.create_invite_code('20000000-0000-0000-0000-000000000001') $$,
+  're-issuing an invite code for an already-issued group succeeds'
+);
+
+select results_eq(
+  $$ select count(*)::int from public.invite_codes where group_id = '20000000-0000-0000-0000-000000000001' $$,
+  $$ values (1) $$,
+  're-issuing replaces the existing row instead of adding a new one'
+);
+
+select isnt(
+  (select code from public.invite_codes where group_id = '20000000-0000-0000-0000-000000000001'),
+  (select code from invite_code_before),
+  're-issuing replaces the code value with a newly generated one'
 );
 
 select lives_ok(

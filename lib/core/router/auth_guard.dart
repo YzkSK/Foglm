@@ -14,6 +14,8 @@ const allowedWhenUnverifiedPaths = {
 /// 追加され次第、この一覧に含めない(=自動的にガード対象になる)想定。
 const allowedWhenUnauthenticatedPaths = {
   '/',
+  '/signup',
+  '/verify-pending',
   '/password-reset',
   '/reset-password',
   '/debug',
