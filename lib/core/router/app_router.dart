@@ -4,8 +4,10 @@ import 'package:foglm/core/config/env.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/auth_state_listener.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:foglm/features/auth/presentation/login_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
+import 'package:foglm/features/auth/presentation/profile_edit_screen.dart';
 import 'package:foglm/features/auth/presentation/reset_password_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 
@@ -70,7 +72,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignUpScreen(),
       ),
 
-      // '/verify-pending' は別issue(#95)でUI実装時に追加する。
+      GoRoute(
+        path: '/verify-pending',
+        builder: (context, state) {
+          final args = state.extra as VerifyPendingArgs?;
+          return EmailVerificationPendingScreen(
+            email: args?.email ?? '',
+            password: args?.password ?? '',
+          );
+        },
+      ),
+
       GoRoute(
         path: '/password-reset',
         builder: (context, state) => const PasswordResetRequestScreen(),
@@ -84,6 +96,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/camera',
         builder: (context, state) => const CameraScreen(),
+      ),
+
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileEditScreen(),
       ),
 
       GoRoute(

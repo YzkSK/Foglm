@@ -30,6 +30,11 @@ abstract class AuthRepository {
   Future<void> requestPasswordReset({required String email});
 
   Future<void> resetPassword({required String newPassword});
+
+  Future<void> updateProfile({
+    required String displayName,
+    String? avatarUrl,
+  });
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -136,6 +141,17 @@ class SupabaseAuthRepository implements AuthRepository {
     } on Object catch (_) {
       throw const UnknownPasswordResetFailure();
     }
+  }
+
+  @override
+  Future<void> updateProfile({
+    required String displayName,
+    String? avatarUrl,
+  }) async {
+    await _client.rpc<void>(
+      'update_profile',
+      params: {'p_display_name': displayName, 'p_avatar_url': avatarUrl},
+    );
   }
 }
 
