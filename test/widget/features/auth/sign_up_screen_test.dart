@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
+import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
@@ -17,10 +19,26 @@ void main() {
   });
 
   Future<void> pumpSignUpScreen(WidgetTester tester) {
+    final router = GoRouter(
+      initialLocation: '/signup',
+      routes: [
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) => const SignUpScreen(),
+        ),
+        GoRoute(
+          path: '/verify-pending',
+          builder: (context, state) {
+            final args = state.extra! as VerifyPendingArgs;
+            return Text('verify-pending:${args.email}:${args.password}');
+          },
+        ),
+      ],
+    );
     return tester.pumpWidget(
       ProviderScope(
         overrides: [authRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: SignUpScreen()),
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
   }
@@ -53,7 +71,9 @@ void main() {
     );
   });
 
-  testWidgets('shows a confirmation message on success', (tester) async {
+  testWidgets('navigates to verify-pending with the email on success', (
+    tester,
+  ) async {
     when(
       () => repository.signUpWithEmail(
         email: 'foo@example.com',
@@ -71,7 +91,10 @@ void main() {
     await tester.tap(find.text('登録する'));
     await tester.pumpAndSettle();
 
-    expect(find.text('確認メールを送信しました'), findsOneWidget);
+    expect(
+      find.text('verify-pending:foo@example.com:Abcdefg1'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows a mapped error message when the repository fails', (

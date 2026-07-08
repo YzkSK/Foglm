@@ -110,5 +110,26 @@ void main() {
       );
       expect(result, isNull);
     });
+
+    test('does not redirect an unauthenticated user on the signup path', () {
+      final result = authRequiredRedirect(
+        user: null,
+        isLoading: false,
+        location: '/signup',
+      );
+      expect(result, isNull);
+    });
+
+    test(
+      'does not redirect an unauthenticated user on the verify-pending path',
+      () {
+        final result = authRequiredRedirect(
+          user: null,
+          isLoading: false,
+          location: '/verify-pending',
+        );
+        expect(result, isNull);
+      },
+    );
   });
 }

@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/widgets/form_status_text.dart';
 import 'package:foglm/features/auth/application/sign_in_controller.dart';
 import 'package:foglm/features/auth/application/sign_out_controller.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
@@ -153,15 +154,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                if (_hasSubmitted && state.hasError) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    signInFailureMessage(state.error),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
+                FormStatusText(
+                  message: _hasSubmitted && state.hasError
+                      ? signInFailureMessage(state.error)
+                      : null,
+                ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: isLoading ? null : _submitEmail,
