@@ -15,6 +15,7 @@ import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';
 import 'package:foglm/features/groups/presentation/create_group_screen.dart';
+import 'package:foglm/features/groups/presentation/group_list_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
@@ -101,6 +102,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileEditScreen(),
+      ),
+
+      GoRoute(
+        path: '/groups',
+        builder: (context, state) => const GroupListScreen(),
       ),
 
       GoRoute(
