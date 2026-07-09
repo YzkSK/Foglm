@@ -14,6 +14,10 @@ import {
 const BLURRED_WIDTH = 32;
 const BLURRED_BLUR_SIGMA = 12;
 
+// 写真の保存パスはUUIDベースで不変(同一パスへの再アップロードは発生しない)ため、
+// CDN・ブラウザともに長期キャッシュしてよい(仕様書 8.2参照)。
+const IMMUTABLE_CACHE_CONTROL_SECONDS = "31536000";
+
 Deno.serve(async (req: Request) => {
   let form: FormData;
   try {
@@ -111,14 +115,20 @@ Deno.serve(async (req: Request) => {
 
   const { error: originalUploadError } = await adminClient.storage
     .from("photo-originals")
-    .upload(originalPath, originalBytes, { contentType: file.type });
+    .upload(originalPath, originalBytes, {
+      contentType: file.type,
+      cacheControl: IMMUTABLE_CACHE_CONTROL_SECONDS,
+    });
   if (originalUploadError) {
     return jsonResponse(500, { error: "upload_failed" });
   }
 
   const { error: blurredUploadError } = await adminClient.storage
     .from("photo-blurred")
-    .upload(blurredPath, blurredBytes, { contentType: "image/jpeg" });
+    .upload(blurredPath, blurredBytes, {
+      contentType: "image/jpeg",
+      cacheControl: IMMUTABLE_CACHE_CONTROL_SECONDS,
+    });
   if (blurredUploadError) {
     await adminClient.storage.from("photo-originals").remove([
       originalPath,
