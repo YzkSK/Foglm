@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/features/groups/application/join_group_controller.dart';
 import 'package:foglm/features/groups/data/my_groups_provider.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
+import 'package:foglm/features/groups/presentation/leave_group_confirm_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// グループ一覧画面(S03)。
@@ -86,6 +87,16 @@ class _GroupListBody extends StatelessWidget {
                 title: Text(group.name),
                 subtitle: Text(_groupSubtitle(group)),
                 onTap: () => context.go('/camera'),
+                trailing: TextButton(
+                  onPressed: () => context.push(
+                    '/groups/leave',
+                    extra: LeaveGroupArgs(
+                      groupId: group.id,
+                      groupName: group.name,
+                    ),
+                  ),
+                  child: const Text('脱退'),
+                ),
               ),
             ),
           ),
