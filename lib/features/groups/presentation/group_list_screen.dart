@@ -43,6 +43,14 @@ class GroupListScreen extends ConsumerWidget {
   }
 }
 
+/// グループタイルのサブタイトル文言(種別、アーカイブ済みの場合はその旨を付記)。
+/// アーカイブ状態でも閲覧・リアクション・コメントは可能なため一覧からは除外しない
+/// (仕様書 3.2.1/3.11参照)。
+String _groupSubtitle(MyGroupRow group) {
+  final kind = group.mode == 'event' ? 'イベントグループ' : '固定グループ';
+  return group.status == 'archived' ? '$kind(アーカイブ済み)' : kind;
+}
+
 class _GroupListBody extends StatelessWidget {
   const _GroupListBody({required this.groups});
 
@@ -76,9 +84,7 @@ class _GroupListBody extends StatelessWidget {
             (group) => Card(
               child: ListTile(
                 title: Text(group.name),
-                subtitle: Text(
-                  group.mode == 'event' ? 'イベントグループ' : '固定グループ',
-                ),
+                subtitle: Text(_groupSubtitle(group)),
                 onTap: () => context.go('/camera'),
               ),
             ),

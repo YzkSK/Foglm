@@ -1,6 +1,9 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
 import 'package:foglm/core/utils/date_formatting.dart';
+import 'package:foglm/core/utils/fallback.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -60,12 +63,20 @@ class SupabaseGroupRepository implements GroupRepository {
     // 招待コードの参加RPCは固定グループ用(invite_member)・イベントグループ用
     // (join_event_group)に分かれており、コード単体からはどちらのモードか
     // 判別できないため、まずinvite_memberを試し、失敗した場合のみ
-    // join_event_groupを試す。
-    try {
-      await _client.rpc<void>('invite_member', params: {'p_code': code});
-    } on Object catch (_) {
-      await _client.rpc<void>('join_event_group', params: {'p_code': code});
-    }
+    // join_event_groupを試す。invite_memberの失敗理由(無効なコードか、単に
+    // 固定グループ用でなかっただけかは区別できない)は握り潰さずログに残す。
+    await tryWithFallback<void>(
+      primary: () =>
+          _client.rpc<void>('invite_member', params: {'p_code': code}),
+      fallback: () =>
+          _client.rpc<void>('join_event_group', params: {'p_code': code}),
+      onPrimaryError: (error, stackTrace) => developer.log(
+        'invite_member failed, falling back to join_event_group',
+        name: 'SupabaseGroupRepository',
+        error: error,
+        stackTrace: stackTrace,
+      ),
+    );
   }
 }
 
