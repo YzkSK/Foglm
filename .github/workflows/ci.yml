@@ -7,6 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  migration-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for duplicate migration timestamps
+        run: |
+          duplicates=$(ls supabase/migrations | grep -E '^[0-9]{14}_.*\.sql$' \
+            | sed -E 's/_.*//' | sort | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "::error::Duplicate migration timestamps found:"
+            echo "$duplicates" | while read -r ts; do
+              echo "  $ts:"
+              ls supabase/migrations | grep "^${ts}_"
+            done
+            exit 1
+          fi
+
   flutter-ci:
     runs-on: ubuntu-latest
     steps:

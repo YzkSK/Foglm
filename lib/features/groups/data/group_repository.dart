@@ -1,13 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
+import 'package:foglm/core/utils/date_formatting.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// グループ関連の他API(招待・参加・イベントグループ作成等)を今後追加していく
-// 想定のため、既存のAuthRepositoryと同じ抽象インターフェース+Supabase実装
-// パターンを踏襲する。
-// ignore: one_member_abstracts
 abstract class GroupRepository {
   Future<void> createGroup({required String name});
+
+  Future<void> createEventGroup({
+    required String name,
+    required DateTime startDate,
+    required DateTime endDate,
+  });
 }
 
 class SupabaseGroupRepository implements GroupRepository {
@@ -18,6 +21,22 @@ class SupabaseGroupRepository implements GroupRepository {
   @override
   Future<void> createGroup({required String name}) async {
     await _client.rpc<void>('create_group', params: {'p_name': name});
+  }
+
+  @override
+  Future<void> createEventGroup({
+    required String name,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    await _client.rpc<void>(
+      'create_event_group',
+      params: {
+        'p_name': name,
+        'p_start_date': formatDateOnly(startDate),
+        'p_end_date': formatDateOnly(endDate),
+      },
+    );
   }
 }
 
