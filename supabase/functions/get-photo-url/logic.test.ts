@@ -28,3 +28,10 @@ Deno.test("resolveStorageTarget returns blurred bucket for waiting_random", () =
     { bucket: "photo-blurred", path: "blur/path.jpg" },
   );
 });
+
+Deno.test("resolveStorageTarget returns blurred bucket for unknown status", () => {
+  assertEquals(
+    resolveStorageTarget("some_future_status", "orig/path.jpg", "blur/path.jpg"),
+    { bucket: "photo-blurred", path: "blur/path.jpg" },
+  );
+});
