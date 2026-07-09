@@ -56,7 +56,30 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
     ).showSnackBar(const SnackBar(content: Text('招待コードをコピーしました')));
   }
 
-  Future<void> _reissueCode() async {
+  Future<void> _confirmAndReissueCode() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      builder: (context) => AlertDialog(
+        title: const Text('コードを再発行しますか?'),
+        content: const Text(
+          '再発行すると、これまでに共有した招待コードは使えなくなります。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('再発行する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
     await ref
         .read(inviteCodeControllerProvider.notifier)
         .reissue(groupId: widget.groupId);
@@ -81,12 +104,19 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
               const SizedBox(height: 24),
               if (state.isLoading)
                 const Center(child: CircularProgressIndicator())
-              else if (state.hasError)
+              else if (state.hasError) ...[
                 Text(
                   '招待コードの発行に失敗しました。時間をおいて再度お試しください',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
-                )
-              else if (state.value != null) ...[
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref
+                      .read(inviteCodeControllerProvider.notifier)
+                      .load(groupId: widget.groupId),
+                  child: const Text('再試行する'),
+                ),
+              ] else if (state.value != null) ...[
                 SelectableText(
                   state.value!,
                   textAlign: TextAlign.center,
@@ -103,7 +133,7 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
-                  onPressed: _reissueCode,
+                  onPressed: _confirmAndReissueCode,
                   child: const Text('コードを再発行する'),
                 ),
               ],

@@ -69,15 +69,40 @@ void main() {
     expect(find.text('招待コードの発行に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
   });
 
-  testWidgets('reissues the code when the reissue button is tapped', (
+  testWidgets(
+    'reissues the code when the reissue action is confirmed in the dialog',
+    (tester) async {
+      when(
+        () => repository.getInviteCode(groupId: 'group-1'),
+      ).thenAnswer((_) async => 'ABC123');
+      when(
+        () => repository.createInviteCode(groupId: 'group-1'),
+      ).thenAnswer((_) async => 'NEWCODE');
+
+      await pumpScreen(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('コードを再発行する'));
+      await tester.pumpAndSettle();
+      expect(find.text('コードを再発行しますか?'), findsOneWidget);
+      verifyNever(
+        () => repository.createInviteCode(groupId: any(named: 'groupId')),
+      );
+
+      await tester.tap(find.text('再発行する'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('NEWCODE'), findsOneWidget);
+      verify(() => repository.createInviteCode(groupId: 'group-1')).called(1);
+    },
+  );
+
+  testWidgets('does not reissue the code when the confirmation is cancelled', (
     tester,
   ) async {
     when(
       () => repository.getInviteCode(groupId: 'group-1'),
     ).thenAnswer((_) async => 'ABC123');
-    when(
-      () => repository.createInviteCode(groupId: 'group-1'),
-    ).thenAnswer((_) async => 'NEWCODE');
 
     await pumpScreen(tester);
     await tester.pumpAndSettle();
@@ -85,8 +110,38 @@ void main() {
     await tester.tap(find.text('コードを再発行する'));
     await tester.pumpAndSettle();
 
-    expect(find.text('NEWCODE'), findsOneWidget);
-    verify(() => repository.createInviteCode(groupId: 'group-1')).called(1);
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABC123'), findsOneWidget);
+    verifyNever(
+      () => repository.createInviteCode(groupId: any(named: 'groupId')),
+    );
+  });
+
+  testWidgets('retries loading when the retry button is tapped', (
+    tester,
+  ) async {
+    var callCount = 0;
+    when(() => repository.getInviteCode(groupId: 'group-1')).thenAnswer((
+      _,
+    ) async {
+      callCount++;
+      if (callCount == 1) {
+        throw Exception('unexpected');
+      }
+      return 'ABC123';
+    });
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('招待コードの発行に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
+
+    await tester.tap(find.text('再試行する'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABC123'), findsOneWidget);
+    verify(() => repository.getInviteCode(groupId: 'group-1')).called(2);
   });
 
   testWidgets('copies the code to the clipboard when the button is tapped', (
