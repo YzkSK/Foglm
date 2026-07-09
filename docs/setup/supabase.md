@@ -49,6 +49,14 @@ dart run tool/supabase_stop.dart
 
 ## 4. マイグレーションの適用
 
+新しいマイグレーションファイルは、以下のコマンドで作成する。
+手動でファイル名（タイムスタンプ）を付けないこと。並行して作業している別ブランチと
+タイムスタンプが衝突し、マージ時に `schema_migrations` の主キー重複でCIが失敗するため。
+
+```bash
+npx supabase migration new <name>
+```
+
 `supabase/migrations/` にマイグレーションSQLを追加した後、以下で反映する。
 
 ```bash
