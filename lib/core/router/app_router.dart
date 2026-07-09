@@ -16,6 +16,7 @@ import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';
 import 'package:foglm/features/groups/presentation/create_group_screen.dart';
 import 'package:foglm/features/groups/presentation/group_list_screen.dart';
+import 'package:foglm/features/groups/presentation/invite_screen.dart';
 import 'package:foglm/features/groups/presentation/leave_group_confirm_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -125,6 +126,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final args = state.extra as LeaveGroupArgs?;
           return LeaveGroupConfirmScreen(
+            groupId: args?.groupId ?? '',
+            groupName: args?.groupName ?? '',
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/groups/invite',
+        builder: (context, state) {
+          final args = state.extra as InviteArgs?;
+          return InviteScreen(
             groupId: args?.groupId ?? '',
             groupName: args?.groupName ?? '',
           );
