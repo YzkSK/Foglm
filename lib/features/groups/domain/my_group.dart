@@ -22,6 +22,10 @@ abstract class MyGroupRow with _$MyGroupRow {
       name: map['name'] as String,
       mode: map['mode'] as String,
       status: map['status'] as String,
+      // start_date/end_dateはPostgresのdate型(時刻・タイムゾーンを持たない)なので、
+      // DateTime.parseは常にローカル時刻0時のDateTime(isUtc: false)を返す
+      // (showDatePickerの戻り値と同じ表現)。UTCへの変換や、他のtimestamptz由来の
+      // DateTimeとの単純な差分計算を行うと日付がずれる可能性があるため注意。
       startDate: map['start_date'] == null
           ? null
           : DateTime.parse(map['start_date'] as String),
