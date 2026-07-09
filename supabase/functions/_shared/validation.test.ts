@@ -1,10 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import {
-  isValidEmail,
-  isValidIsoDateTime,
-  isValidPassword,
-  isValidUuid,
-} from "./validation.ts";
+import { isValidEmail, isValidIsoDateTime, isValidPassword, isValidUuid } from "./validation.ts";
 
 Deno.test("isValidEmail accepts a well-formed address", () => {
   assertEquals(isValidEmail("foo@example.com"), true);
