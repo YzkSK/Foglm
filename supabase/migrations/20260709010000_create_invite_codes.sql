@@ -1,4 +1,6 @@
--- invite_codes: mode=group(固定グループ)の招待コード発行を表す(仕様書 5.1/6.2参照)。
+-- invite_codes: 固定グループ(mode=group)・イベントグループ(mode=event)共通の招待コード発行を
+-- 表す(仕様書 4.1 S05/5.1/6.2参照)。招待リンク・コード発行画面(S05)は両モード共通のため、
+-- このテーブルもmodeを問わず利用する。
 -- 1グループにつき有効なコードは常に1件のみ(group_idにUNIQUE制約)。
 -- 再発行は同じ行をUPDATEで置き換える(create_invite_code関数が担当)。
 create table public.invite_codes (
