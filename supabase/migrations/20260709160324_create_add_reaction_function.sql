@@ -31,12 +31,15 @@ begin
 
   select * into v_group from public.groups where id = v_photo.group_id;
 
-  if v_group.mode = 'solo' then
-    raise exception 'add_reaction: reactions are not available for solo mode photos';
-  end if;
-
+  -- 権限チェック(現役メンバーか)を業務ルールチェック(ソロモード対象外・現像済みか)より
+  -- 先に行う。逆順だと非メンバーが例外の内容(ソロモードかどうか)から対象グループの
+  -- 性質を間接的に推測できてしまう。
   if not public.is_active_member(v_photo.group_id, auth.uid()) then
     raise exception 'add_reaction: caller is not an active member of the group';
+  end if;
+
+  if v_group.mode = 'solo' then
+    raise exception 'add_reaction: reactions are not available for solo mode photos';
   end if;
 
   if v_photo.status <> 'developed' then
