@@ -26,6 +26,7 @@
 - PRを作成するときは、リポジトリにあるPRテンプレート(`.github/PULL_REQUEST_TEMPLATE.md`)に従って記述する。
 - Issueを作成するときは、リポジトリにあるIssueテンプレート(`.github/ISSUE_TEMPLATE/`)に従って記述する。
 - 原則、git worktree は使用しないこと(通常のブランチ切り替えで対応する)
+- Supabaseのマイグレーションファイルは必ず `npx supabase migration new <name>` で作成し、ファイル名(タイムスタンプ)を手打ちしないこと。並行ブランチとのタイムスタンプ衝突によるCI失敗を防ぐため(`docs/setup/supabase.md`参照)。
 
 ## コーディング規約
 
