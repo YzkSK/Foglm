@@ -29,8 +29,8 @@ void main() {
       builder: () {
         final repository = _MockGroupRepository();
         when(
-          () => repository.createInviteCode(groupId: 'group-1'),
-        ).thenAnswer((_) => Completer<String>().future);
+          () => repository.getInviteCode(groupId: 'group-1'),
+        ).thenAnswer((_) => Completer<String?>().future);
         return _pumpApp(repository);
       },
     ),
@@ -38,13 +38,13 @@ void main() {
 
   unawaited(
     goldenTest(
-      'InviteScreen shows the issued invite code',
+      'InviteScreen shows the existing invite code',
       fileName: 'invite_screen_issued',
       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
       builder: () {
         final repository = _MockGroupRepository();
         when(
-          () => repository.createInviteCode(groupId: 'group-1'),
+          () => repository.getInviteCode(groupId: 'group-1'),
         ).thenAnswer((_) async => 'ABC123XYZ0');
         return _pumpApp(repository);
       },
@@ -59,7 +59,7 @@ void main() {
       builder: () {
         final repository = _MockGroupRepository();
         when(
-          () => repository.createInviteCode(groupId: 'group-1'),
+          () => repository.getInviteCode(groupId: 'group-1'),
         ).thenThrow(Exception('unexpected'));
         return _pumpApp(repository);
       },

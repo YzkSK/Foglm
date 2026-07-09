@@ -41,7 +41,7 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
       Future.microtask(
         () => ref
             .read(inviteCodeControllerProvider.notifier)
-            .issue(groupId: widget.groupId),
+            .load(groupId: widget.groupId),
       ),
     );
   }
@@ -54,6 +54,12 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('招待コードをコピーしました')));
+  }
+
+  Future<void> _reissueCode() async {
+    await ref
+        .read(inviteCodeControllerProvider.notifier)
+        .reissue(groupId: widget.groupId);
   }
 
   @override
@@ -90,6 +96,15 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                 ElevatedButton(
                   onPressed: () => _copyCode(state.value!),
                   child: const Text('コードをコピー'),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  '再発行すると、これまでに共有した招待コードは使えなくなります。',
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _reissueCode,
+                  child: const Text('コードを再発行する'),
                 ),
               ],
             ],
