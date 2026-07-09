@@ -53,6 +53,30 @@ class _LeaveGroupConfirmScreenState
 
   @override
   Widget build(BuildContext context) {
+    // groupIdが空の場合(不正な遷移。通常はcontext.push経由でのみ到達するため
+    // 起こらない想定)は、脱退を実行させず早期にエラー表示する。
+    if (widget.groupId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('グループを脱退')),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('グループ情報を取得できませんでした'),
+                const SizedBox(height: 24),
+                OutlinedButton(
+                  onPressed: () => context.pop(),
+                  child: const Text('戻る'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final state = ref.watch(leaveGroupControllerProvider);
     final isLoading = state.isLoading;
 
@@ -76,7 +100,8 @@ class _LeaveGroupConfirmScreenState
               if (_hasSubmitted && state.hasError) ...[
                 const SizedBox(height: 16),
                 Text(
-                  '脱退に失敗しました。時間をおいて再度お試しください',
+                  '脱退に失敗しました。既に脱退済みの可能性があります。'
+                  'グループ一覧の状態をご確認のうえ、必要であれば再度お試しください',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],

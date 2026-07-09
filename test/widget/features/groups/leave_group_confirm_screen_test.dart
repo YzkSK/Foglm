@@ -84,7 +84,13 @@ void main() {
     await tester.tap(find.text('脱退する'));
     await tester.pumpAndSettle();
 
-    expect(find.text('脱退に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
+    expect(
+      find.text(
+        '脱退に失敗しました。既に脱退済みの可能性があります。'
+        'グループ一覧の状態をご確認のうえ、必要であれば再度お試しください',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('returns to the previous screen when cancelled', (
@@ -93,6 +99,44 @@ void main() {
     await pumpScreen(tester);
 
     await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('グループ一覧画面プレースホルダー'), findsOneWidget);
+    verifyNever(() => repository.leaveGroup(groupId: any(named: 'groupId')));
+  });
+
+  testWidgets('shows an error state and does not call leaveGroup when '
+      'groupId is empty', (tester) async {
+    final router = GoRouter(
+      initialLocation: '/groups',
+      routes: [
+        GoRoute(
+          path: '/groups',
+          builder: (context, state) =>
+              const Scaffold(body: Text('グループ一覧画面プレースホルダー')),
+        ),
+        GoRoute(
+          path: '/groups/leave',
+          builder: (context, state) =>
+              const LeaveGroupConfirmScreen(groupId: '', groupName: ''),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [groupRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    unawaited(router.push('/groups/leave'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('グループ情報を取得できませんでした'), findsOneWidget);
+    expect(find.text('脱退する'), findsNothing);
+
+    await tester.tap(find.text('戻る'));
     await tester.pumpAndSettle();
 
     expect(find.text('グループ一覧画面プレースホルダー'), findsOneWidget);
