@@ -137,6 +137,12 @@ Deno.test("getPhotoUrl caches signed URLs per (bucket, path) and reissues near e
     assertEquals(third.status, 200);
     assertNotEquals(third.body.url, firstUrl);
     assertEquals(third.body.expires_in, 300);
+
+    // 非メンバー・存在しないphoto_idで404になることを確認(既存挙動の回帰確認)
+    const nonexistentPhotoId = crypto.randomUUID();
+    const notFound = await getPhotoUrl(callerClient, adminClient, nonexistentPhotoId, firstCallNow);
+    assertEquals(notFound.status, 404);
+    assertEquals(notFound.body.error, "not_found");
   } finally {
     if (groupId) {
       const { error } = await adminClient.from("groups").delete().eq("id", groupId);
