@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -74,10 +75,13 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     setState(() => _isCapturing = true);
 
     try {
-      final XFile file;
+      final Uint8List bytes;
       try {
-        file = await controller.takePicture();
-      } on CameraException {
+        final file = await controller.takePicture();
+        bytes = await file.readAsBytes();
+      } on Object {
+        // takePicture()のCameraException、readAsBytes()のストレージI/O
+        // エラー等をまとめて撮影失敗として扱う。
         if (mounted) {
           ScaffoldMessenger.of(
             context,
@@ -85,8 +89,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         }
         return;
       }
-
-      final bytes = await file.readAsBytes();
       if (!mounted) {
         return;
       }
@@ -139,6 +141,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       } else if (error is NotActiveMemberFailure) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('このグループのメンバーではないため撮影できません')),
+        );
+      } else if (error is EmailNotVerifiedFailure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('メールアドレスの確認が完了していないため撮影できません')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

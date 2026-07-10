@@ -20,6 +20,13 @@ class NotActiveMemberFailure extends UploadPhotoFailure {
   const NotActiveMemberFailure();
 }
 
+/// メールアドレスが未確認のため撮影できない(仕様書 3.1参照)。
+/// `/camera`はメール未確認ユーザーの許可リスト外のため通常は起きないが、
+/// 防御的にハンドリングする。
+class EmailNotVerifiedFailure extends UploadPhotoFailure {
+  const EmailNotVerifiedFailure();
+}
+
 class UnknownUploadPhotoFailure extends UploadPhotoFailure {
   const UnknownUploadPhotoFailure();
 }
@@ -39,6 +46,8 @@ UploadPhotoFailure mapFunctionExceptionToUploadPhotoFailure(
       return const GroupArchivedFailure();
     case 'not_active_member':
       return const NotActiveMemberFailure();
+    case 'email_not_verified':
+      return const EmailNotVerifiedFailure();
     default:
       return const UnknownUploadPhotoFailure();
   }
