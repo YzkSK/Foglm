@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/auth/data/auth_repository.dart';
+import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -34,7 +37,10 @@ Widget _pumpApp(
   );
 
   return ProviderScope(
-    overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      authRepositoryProvider.overrideWithValue(repository),
+      currentPublicUserProvider.overrideWith((ref) async => null),
+    ],
     child: MaterialApp.router(routerConfig: router),
   );
 }
@@ -64,6 +70,7 @@ void main() {
     await tester.pumpWidget(
       _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('確認メールを再送する'));
     await tester.pumpAndSettle();
 
@@ -88,6 +95,7 @@ void main() {
     await tester.pumpWidget(
       _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('確認メールを再送する'));
     await tester.pumpAndSettle();
 
@@ -107,6 +115,7 @@ void main() {
     await tester.pumpWidget(
       _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('確認した'));
     await tester.pumpAndSettle();
 
@@ -126,6 +135,7 @@ void main() {
     await tester.pumpWidget(
       _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
     );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('確認した'));
     await tester.pumpAndSettle();
 
@@ -147,6 +157,7 @@ void main() {
       await tester.pumpWidget(
         _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
       );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('確認した'));
       await tester.pumpAndSettle();
 
@@ -178,5 +189,68 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('signup'), findsOneWidget);
+  });
+
+  testWidgets('tapping logout calls signOut', (tester) async {
+    when(() => repository.signOut()).thenAnswer((_) async {});
+
+    await tester.pumpWidget(
+      _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ログアウト'));
+    await tester.pumpAndSettle();
+
+    verify(() => repository.signOut()).called(1);
+  });
+
+  testWidgets(
+    'tapping logout calls signOut when email/password are missing',
+    (tester) async {
+      when(() => repository.signOut()).thenAnswer((_) async {});
+
+      await tester.pumpWidget(_pumpApp(repository, email: '', password: ''));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ログアウト'));
+      await tester.pumpAndSettle();
+
+      verify(() => repository.signOut()).called(1);
+    },
+  );
+
+  testWidgets('shows a snackbar when logout fails', (tester) async {
+    when(() => repository.signOut()).thenThrow(Exception('unexpected'));
+
+    await tester.pumpWidget(
+      _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ログアウト'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ログアウトに失敗しました。時間をおいて再度お試しください'), findsOneWidget);
+  });
+
+  testWidgets('disables the other buttons while logging out', (
+    tester,
+  ) async {
+    when(
+      () => repository.signOut(),
+    ).thenAnswer((_) => Completer<void>().future);
+
+    await tester.pumpWidget(
+      _pumpApp(repository, email: 'foo@example.com', password: 'Abcdefg1'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ログアウト'));
+    await tester.pump();
+
+    final resendButton = tester.widget<ElevatedButton>(
+      find.ancestor(
+        of: find.text('確認メールを再送する'),
+        matching: find.byType(ElevatedButton),
+      ),
+    );
+    expect(resendButton.onPressed, isNull);
   });
 }
