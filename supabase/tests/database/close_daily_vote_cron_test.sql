@@ -1,4 +1,6 @@
 -- close_daily_vote (cron): 投票締め切り・当選写真の即時現像・落選写真のランダム現像予約(issue #25 / 仕様書3.5・3.6・6.4・6.7参照)。
+-- check_photo_daily_limitトリガーがtaken_dateをAsia/Tokyo基準で上書きするため、
+-- vote_date/taken_atもJST基準に揃える(issue #187)。
 begin;
 select plan(15);
 
@@ -23,11 +25,11 @@ values ('81000000-0000-0000-0000-000000000001', 'Close Vote Majority Group', 'gr
 
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path)
 values
-  ('82000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', now() - interval '2 days', current_date - 2, 'original/p1.jpg', 'blurred/p1.jpg'),
-  ('82000000-0000-0000-0000-000000000002', '81000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', now() - interval '2 days', current_date - 2, 'original/p2.jpg', 'blurred/p2.jpg');
+  ('82000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', (((current_timestamp at time zone 'Asia/Tokyo')::date - 2) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'original/p1.jpg', 'blurred/p1.jpg'),
+  ('82000000-0000-0000-0000-000000000002', '81000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', (((current_timestamp at time zone 'Asia/Tokyo')::date - 2) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'original/p2.jpg', 'blurred/p2.jpg');
 
 insert into public.daily_votes (id, group_id, vote_date, status)
-values ('83000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', current_date - 2, 'open');
+values ('83000000-0000-0000-0000-000000000001', '81000000-0000-0000-0000-000000000001', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'open');
 
 insert into public.vote_entries (daily_vote_id, user_id, photo_id)
 values
@@ -41,11 +43,11 @@ values ('81000000-0000-0000-0000-000000000002', 'Close Vote Tie Group', 'group',
 
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path)
 values
-  ('82000000-0000-0000-0000-000000000003', '81000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000004', now() - interval '2 days', current_date - 2, 'original/p3.jpg', 'blurred/p3.jpg'),
-  ('82000000-0000-0000-0000-000000000004', '81000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000004', now() - interval '2 days', current_date - 2, 'original/p4.jpg', 'blurred/p4.jpg');
+  ('82000000-0000-0000-0000-000000000003', '81000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000004', (((current_timestamp at time zone 'Asia/Tokyo')::date - 2) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'original/p3.jpg', 'blurred/p3.jpg'),
+  ('82000000-0000-0000-0000-000000000004', '81000000-0000-0000-0000-000000000002', '80000000-0000-0000-0000-000000000004', (((current_timestamp at time zone 'Asia/Tokyo')::date - 2) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'original/p4.jpg', 'blurred/p4.jpg');
 
 insert into public.daily_votes (id, group_id, vote_date, status)
-values ('83000000-0000-0000-0000-000000000002', '81000000-0000-0000-0000-000000000002', current_date - 2, 'open');
+values ('83000000-0000-0000-0000-000000000002', '81000000-0000-0000-0000-000000000002', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'open');
 
 insert into public.vote_entries (daily_vote_id, user_id, photo_id)
 values
@@ -57,30 +59,30 @@ insert into public.groups (id, name, mode, created_by)
 values ('81000000-0000-0000-0000-000000000003', 'Close Vote Zero Votes Group', 'group', '80000000-0000-0000-0000-000000000001');
 
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path)
-values ('82000000-0000-0000-0000-000000000005', '81000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000001', now() - interval '2 days', current_date - 2, 'original/p5.jpg', 'blurred/p5.jpg');
+values ('82000000-0000-0000-0000-000000000005', '81000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000001', (((current_timestamp at time zone 'Asia/Tokyo')::date - 2) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'original/p5.jpg', 'blurred/p5.jpg');
 
 insert into public.daily_votes (id, group_id, vote_date, status)
-values ('83000000-0000-0000-0000-000000000003', '81000000-0000-0000-0000-000000000003', current_date - 2, 'open');
+values ('83000000-0000-0000-0000-000000000003', '81000000-0000-0000-0000-000000000003', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'open');
 
 -- Scenario 4: already closed (group G4) must stay untouched
 insert into public.groups (id, name, mode, created_by)
 values ('81000000-0000-0000-0000-000000000004', 'Close Vote Already Closed Group', 'group', '80000000-0000-0000-0000-000000000001');
 
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path, status)
-values ('82000000-0000-0000-0000-000000000006', '81000000-0000-0000-0000-000000000004', '80000000-0000-0000-0000-000000000001', now() - interval '2 days', current_date - 2, 'original/p6.jpg', 'blurred/p6.jpg', 'developed');
+values ('82000000-0000-0000-0000-000000000006', '81000000-0000-0000-0000-000000000004', '80000000-0000-0000-0000-000000000001', (((current_timestamp at time zone 'Asia/Tokyo')::date - 2) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'original/p6.jpg', 'blurred/p6.jpg', 'developed');
 
 insert into public.daily_votes (id, group_id, vote_date, status, winner_photo_id, closed_at)
-values ('83000000-0000-0000-0000-000000000004', '81000000-0000-0000-0000-000000000004', current_date - 2, 'closed', '82000000-0000-0000-0000-000000000006', now() - interval '1 day');
+values ('83000000-0000-0000-0000-000000000004', '81000000-0000-0000-0000-000000000004', (current_timestamp at time zone 'Asia/Tokyo')::date - 2, 'closed', '82000000-0000-0000-0000-000000000006', now() - interval '1 day');
 
 -- Scenario 5: vote_date in the future (group G5) must not be processed yet
 insert into public.groups (id, name, mode, created_by)
 values ('81000000-0000-0000-0000-000000000005', 'Close Vote Future Group', 'group', '80000000-0000-0000-0000-000000000001');
 
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path)
-values ('82000000-0000-0000-0000-000000000007', '81000000-0000-0000-0000-000000000005', '80000000-0000-0000-0000-000000000001', now() + interval '1 day', current_date + 1, 'original/p7.jpg', 'blurred/p7.jpg');
+values ('82000000-0000-0000-0000-000000000007', '81000000-0000-0000-0000-000000000005', '80000000-0000-0000-0000-000000000001', (((current_timestamp at time zone 'Asia/Tokyo')::date + 1) + time '12:00') at time zone 'Asia/Tokyo', (current_timestamp at time zone 'Asia/Tokyo')::date + 1, 'original/p7.jpg', 'blurred/p7.jpg');
 
 insert into public.daily_votes (id, group_id, vote_date, status)
-values ('83000000-0000-0000-0000-000000000005', '81000000-0000-0000-0000-000000000005', current_date + 1, 'open');
+values ('83000000-0000-0000-0000-000000000005', '81000000-0000-0000-0000-000000000005', (current_timestamp at time zone 'Asia/Tokyo')::date + 1, 'open');
 
 select public.close_daily_vote();
 
@@ -105,7 +107,7 @@ select is(
 
 select ok(
   (select develop_scheduled_at from public.photos where id = '82000000-0000-0000-0000-000000000002')
-    between (current_date - 2 + 3)::timestamptz and (current_date - 2 + 14)::timestamptz,
+    between ((current_timestamp at time zone 'Asia/Tokyo')::date - 2 + 3)::timestamptz and ((current_timestamp at time zone 'Asia/Tokyo')::date - 2 + 14)::timestamptz,
   'losing photo P2 develop_scheduled_at falls within taken_date + 3..14 days'
 );
 
