@@ -3,7 +3,7 @@
 -- リアクションと異なり1人が複数件投稿できるため、単純なINSERTのみでUPSERTは行わない。
 -- commentsへの直接INSERTはRLSの列単位grantだけでは「現像済み写真か」「ソロモードでないか」を
 -- 検証できないため、本関数(security definer)経由のみに限定する
--- (直接書き込みの禁止は20260709160327で行う)。
+-- (直接書き込みの禁止は20260710050130で行う)。
 create function public.add_comment(p_photo_id uuid, p_body text)
 returns public.comments
 language plpgsql

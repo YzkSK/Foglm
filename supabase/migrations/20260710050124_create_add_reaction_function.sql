@@ -3,7 +3,7 @@
 -- 1人1枚につき1リアクションまでで、再選択時はUPSERTで上書きする(UNIQUE (photo_id, user_id))。
 -- reactionsへの直接INSERT/UPDATEはRLSの列単位grantだけでは「現像済み写真か」
 -- 「ソロモードでないか」を検証できないため、本関数(security definer)経由のみに限定する
--- (直接書き込みの禁止は20260709160327で行う)。
+-- (直接書き込みの禁止は20260710050130で行う)。
 create function public.add_reaction(p_photo_id uuid, p_emoji text)
 returns public.reactions
 language plpgsql
