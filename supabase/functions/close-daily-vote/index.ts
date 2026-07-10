@@ -56,6 +56,7 @@ export function randomDevelopScheduledDate(
 
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { jsonResponse } from "../_shared/http.ts";
+import { createTodayPhotoNotifier, type TodayPhotoNotifier } from "./today-photo-notification.ts";
 
 interface DailyVoteRow {
   id: string;
@@ -76,9 +77,27 @@ export interface CloseDailyVoteResult {
   processedCount: number;
 }
 
-/** 当選写真確定後に呼び出す通知フックポイント。現像完了通知の送信は別issueで対応するため未実装。 */
-function notifyWinner(_winnerPhotoId: string): void {
-  // 現像完了通知(今日の1枚)の送信は別issueで対応する(issue #175のスコープ外)。
+const noOpNotifier: TodayPhotoNotifier = () => Promise.resolve({ sentCount: 0, failedCount: 0 });
+
+export interface CloseDailyVoteDependencies {
+  notifyWinner?: TodayPhotoNotifier;
+  logNotificationError?: (message: string) => void;
+}
+
+/** 通知失敗をログへ記録し、投票締め処理には伝播させない。 */
+export async function notifyWinnerBestEffort(
+  notifyWinner: TodayPhotoNotifier,
+  groupId: string,
+  winnerPhotoId: string,
+  logError: (message: string) => void = console.error,
+): Promise<void> {
+  try {
+    await notifyWinner(groupId, winnerPhotoId);
+  } catch (error) {
+    logError(
+      `今日の1枚通知に失敗しました: ${error instanceof Error ? error.message : "unknown"}`,
+    );
+  }
 }
 
 async function selectWinnerPhotoId(
@@ -114,6 +133,7 @@ async function closeSingleDailyVote(
   supabase: SupabaseClient,
   dailyVote: DailyVoteRow,
   winnerPhotoId: string,
+  dependencies: Required<CloseDailyVoteDependencies>,
 ): Promise<void> {
   const { error: winnerUpdateError } = await supabase
     .from("photos")
@@ -159,7 +179,12 @@ async function closeSingleDailyVote(
     throw new Error(`daily_votesのクローズに失敗しました: ${closeError.message}`);
   }
 
-  notifyWinner(winnerPhotoId);
+  await notifyWinnerBestEffort(
+    dependencies.notifyWinner,
+    dailyVote.group_id,
+    winnerPhotoId,
+    dependencies.logNotificationError,
+  );
 }
 
 /**
@@ -171,7 +196,13 @@ async function closeSingleDailyVote(
 export async function closeDailyVote(
   supabase: SupabaseClient,
   today: string = todayUtcDateString(),
+  dependencies: CloseDailyVoteDependencies = {},
 ): Promise<CloseDailyVoteResult> {
+  const resolvedDependencies: Required<CloseDailyVoteDependencies> = {
+    notifyWinner: dependencies.notifyWinner ?? noOpNotifier,
+    logNotificationError: dependencies.logNotificationError ?? console.error,
+  };
+
   const { data: openVotes, error: openVotesError } = await supabase
     .from("daily_votes")
     .select("id, group_id, vote_date")
@@ -185,12 +216,36 @@ export async function closeDailyVote(
   for (const dailyVote of (openVotes ?? []) as DailyVoteRow[]) {
     const winnerPhotoId = await selectWinnerPhotoId(supabase, dailyVote);
     if (!winnerPhotoId) continue;
-    await closeSingleDailyVote(supabase, dailyVote, winnerPhotoId);
+    await closeSingleDailyVote(
+      supabase,
+      dailyVote,
+      winnerPhotoId,
+      resolvedDependencies,
+    );
     processedCount++;
   }
   return { processedCount };
 }
 
+Deno.serve(async (_req: Request) => {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const notifyWinner = createTodayPhotoNotifier(
+    supabase,
+    Deno.env.get("FIREBASE_SERVICE_ACCOUNT") ?? "",
+  );
+
+  try {
+    const result = await closeDailyVote(supabase, todayUtcDateString(), { notifyWinner });
+    return jsonResponse(200, { processedCount: result.processedCount });
+  } catch (error) {
+    return jsonResponse(500, {
+      error: "close_daily_vote_failed",
+      message: error instanceof Error ? error.message : "unknown",
+    });
+  }
+});
 if (import.meta.main) {
   Deno.serve(async (req: Request) => {
     // 認可チェック: pg_cronからのリクエストのみを受け付ける(共有シークレット方式)。
