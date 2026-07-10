@@ -11,9 +11,16 @@
 --   select vault.create_secret('<service_role_key>', 'service_role_key');
 create extension if not exists pg_net with schema extensions;
 
-select cron.unschedule('close_daily_vote_daily');
+do $$
+begin
+  perform cron.unschedule('close_daily_vote_daily');
+exception
+  when others then
+    null;
+end;
+$$;
 
-drop function public.close_daily_vote();
+drop function if exists public.close_daily_vote();
 
 select cron.schedule(
   'close_daily_vote_daily',
