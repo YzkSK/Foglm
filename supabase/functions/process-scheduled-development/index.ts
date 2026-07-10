@@ -65,18 +65,29 @@ export async function processScheduledDevelopment(
   return { developedGroupCounts };
 }
 
-Deno.serve(async (_req: Request) => {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+if (import.meta.main) {
+  Deno.serve(async (req: Request) => {
+    // 認可チェック: pg_cronからのリクエストのみを受け付ける(共有シークレット方式)。
+    // CRON_SECRET環境変数とX-Cron-Secretヘッダーを比較し、不一致なら401を返す。
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const incomingSecret = req.headers.get("x-cron-secret");
+    if (!cronSecret || !incomingSecret || cronSecret !== incomingSecret) {
+      return jsonResponse(401, { error: "unauthorized" });
+    }
 
-  try {
-    const result = await processScheduledDevelopment(supabase);
-    return jsonResponse(200, { developedGroupCounts: result.developedGroupCounts });
-  } catch (error) {
-    return jsonResponse(500, {
-      error: "process_scheduled_development_failed",
-      message: error instanceof Error ? error.message : "unknown",
-    });
-  }
-});
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    try {
+      const result = await processScheduledDevelopment(supabase);
+      return jsonResponse(200, { developedGroupCounts: result.developedGroupCounts });
+    } catch (error) {
+      console.error("[process-scheduled-development] processScheduledDevelopment failed:", error);
+      return jsonResponse(500, {
+        error: "process_scheduled_development_failed",
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  });
+}

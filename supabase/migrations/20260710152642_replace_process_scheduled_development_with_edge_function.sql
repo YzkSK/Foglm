@@ -4,6 +4,7 @@
 --
 -- 事前準備: Vaultの'project_url'/'service_role_key'secretはclose_daily_voteの
 -- Edge Function化(#175)時に登録済みの前提であり、本migrationでは再登録しない。
+-- 'cron_secret' secretはclose_daily_voteの認可チェック対応(#184)時に登録済みの前提。
 -- 未登録の環境ではcronジョブの実行時にnet.http_postが失敗する。
 
 -- pg_cronのunschedule(job_name)は対象ジョブが存在しない場合に例外を送出し、
@@ -30,8 +31,8 @@ select cron.schedule(
       || '/functions/v1/process-scheduled-development',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' ||
-        (select decrypted_secret from vault.decrypted_secrets where name = 'service_role_key')
+      'X-Cron-Secret',
+        (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
     ),
     body := '{}'::jsonb
   ) as request_id;
