@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/core/widgets/form_status_text.dart';
+import 'package:foglm/features/auth/application/sign_out_controller.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,10 @@ class VerifyPendingArgs {
 /// 確認メール再送導線を提供する(仕様書 3.1 / 4.1 S01c / 6.1 verify_email)。
 /// 確認完了後はプロフィール初期設定画面(S02、#5)へ遷移する想定だが、
 /// そちらが未実装のためログイン画面('/')へ遷移するに留める。
+///
+/// 未確認ユーザーは`emailVerificationRedirect`により設定・マイページ画面(S12)へ
+/// 到達できないため、S12のログアウト導線が使えない。仕様書3.1.1の
+/// 「いつでもログアウトできる」を満たすため、本画面にもログアウトを置く。
 class EmailVerificationPendingScreen extends ConsumerStatefulWidget {
   const EmailVerificationPendingScreen({
     required this.email,
@@ -117,6 +122,19 @@ class _EmailVerificationPendingScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isSigningOut = ref.watch(
+      signOutControllerProvider.select((state) => state.isLoading),
+    );
+
+    ref.listen<AsyncValue<void>>(signOutControllerProvider, (previous, next) {
+      // signOut失敗を握り潰さず、ユーザーにも通知する。
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ログアウトに失敗しました。時間をおいて再度お試しください')),
+        );
+      }
+    });
+
     // '/verify-pending'への直接アクセス・ディープリンク・再起動等でextraが
     // 渡されなかった場合、email/passwordが空文字になる(app_router.dart参照)。
     // その状態のまま再送・再サインインを試みてもエラーになるだけなので、
@@ -136,12 +154,16 @@ class _EmailVerificationPendingScreenState
                   onPressed: () => context.go('/signup'),
                   child: const Text('サインアップ画面へ'),
                 ),
+                const SizedBox(height: 8),
+                _LogoutButton(isBusy: isSigningOut),
               ],
             ),
           ),
         ),
       );
     }
+
+    final isBusy = _isBusy || isSigningOut;
 
     return Scaffold(
       appBar: AppBar(title: const Text('メール確認待ち')),
@@ -158,12 +180,12 @@ class _EmailVerificationPendingScreenState
               FormStatusText(message: _message, isError: _isMessageError),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isBusy ? null : _resend,
+                onPressed: isBusy ? null : _resend,
                 child: const Text('確認メールを再送する'),
               ),
               const SizedBox(height: 8),
               ElevatedButton(
-                onPressed: _isBusy ? null : _checkConfirmed,
+                onPressed: isBusy ? null : _checkConfirmed,
                 child: _isBusy
                     ? const SizedBox(
                         width: 20,
@@ -172,10 +194,36 @@ class _EmailVerificationPendingScreenState
                       )
                     : const Text('確認した'),
               ),
+              const SizedBox(height: 8),
+              _LogoutButton(isBusy: isBusy),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// メール未確認ユーザーは設定・マイページ画面(S12)に到達できないため、
+/// 本画面がログアウトの唯一の導線になる(仕様書 3.1.1参照)。
+class _LogoutButton extends ConsumerWidget {
+  const _LogoutButton({required this.isBusy});
+
+  final bool isBusy;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return OutlinedButton(
+      onPressed: isBusy
+          ? null
+          : () => ref.read(signOutControllerProvider.notifier).signOut(),
+      child: isBusy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('ログアウト'),
     );
   }
 }
