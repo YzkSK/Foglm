@@ -48,6 +48,10 @@ class DebugMenuScreen extends StatelessWidget {
               onPressed: () => context.go('/reset-password'),
               child: const Text('新パスワード設定'),
             ),
+            ElevatedButton(
+              onPressed: () => context.push('/account/delete'),
+              child: const Text('アカウント削除'),
+            ),
           ],
         ),
       ),

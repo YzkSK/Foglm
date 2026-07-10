@@ -4,6 +4,7 @@ import 'package:foglm/core/config/env.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/auth_state_listener.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/auth/presentation/delete_account_confirm_screen.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:foglm/features/auth/presentation/login_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
@@ -109,6 +110,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/groups',
         builder: (context, state) => const GroupListScreen(),
+      ),
+
+      GoRoute(
+        path: '/account/delete',
+        builder: (context, state) => const DeleteAccountConfirmScreen(),
       ),
 
       GoRoute(
