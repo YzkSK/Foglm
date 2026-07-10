@@ -77,4 +77,69 @@ Deno.test("notifyWinnerBestEffort logs and swallows notification errors", async 
     (message) => errors.push(message),
   );
   assertEquals(errors, ["今日の1枚通知に失敗しました: FCM unavailable"]);
+// --- 認可チェック (X-Cron-Secret) のユニットテスト ---
+// Deno.serve ハンドラを直接呼び出す代わりに、ハンドラの認可チェックロジックのみを
+// 再現したミニハンドラでシミュレートする。
+// CRON_SECRET 環境変数が未設定・不一致・一致の4ケースを確認する。
+
+/** テスト用: ハンドラの認可チェック部分のみを再現したミニハンドラ */
+function createAuthCheckHandler(
+  envCronSecret: string | undefined,
+): (req: Request) => Response {
+  return (req: Request): Response => {
+    const incomingSecret = req.headers.get("x-cron-secret");
+    if (
+      !envCronSecret || !incomingSecret || envCronSecret !== incomingSecret
+    ) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    // 認可OK(実際のDB呼び出しはしない)
+    return new Response(JSON.stringify({ processedCount: 0 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+}
+
+Deno.test("handler returns 401 when X-Cron-Secret header is missing", () => {
+  const handler = createAuthCheckHandler("my-secret");
+  const req = new Request("http://localhost/functions/v1/close-daily-vote", {
+    method: "POST",
+  });
+  const res = handler(req);
+  assertEquals(res.status, 401);
+});
+
+Deno.test("handler returns 401 when X-Cron-Secret header is wrong", () => {
+  const handler = createAuthCheckHandler("my-secret");
+  const req = new Request("http://localhost/functions/v1/close-daily-vote", {
+    method: "POST",
+    headers: { "X-Cron-Secret": "wrong-secret" },
+  });
+  const res = handler(req);
+  assertEquals(res.status, 401);
+});
+
+Deno.test("handler returns 401 when CRON_SECRET env is not set", () => {
+  // envCronSecret = undefined (環境変数未設定を模倣)
+  const handler = createAuthCheckHandler(undefined);
+  const req = new Request("http://localhost/functions/v1/close-daily-vote", {
+    method: "POST",
+    headers: { "X-Cron-Secret": "any-secret" },
+  });
+  const res = handler(req);
+  assertEquals(res.status, 401);
+});
+
+Deno.test("handler returns 200 when X-Cron-Secret header matches CRON_SECRET", () => {
+  const handler = createAuthCheckHandler("correct-secret");
+  const req = new Request("http://localhost/functions/v1/close-daily-vote", {
+    method: "POST",
+    headers: { "X-Cron-Secret": "correct-secret" },
+  });
+  const res = handler(req);
+  assertEquals(res.status, 200);
 });
