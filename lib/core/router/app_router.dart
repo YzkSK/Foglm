@@ -16,6 +16,8 @@ import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';
 import 'package:foglm/features/groups/presentation/create_group_screen.dart';
 import 'package:foglm/features/groups/presentation/group_list_screen.dart';
+import 'package:foglm/features/groups/presentation/invite_screen.dart';
+import 'package:foglm/features/groups/presentation/leave_group_confirm_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
@@ -117,6 +119,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/groups/new-event',
         builder: (context, state) => const CreateEventGroupScreen(),
+      ),
+
+      GoRoute(
+        path: '/groups/leave',
+        builder: (context, state) {
+          final args = state.extra as LeaveGroupArgs?;
+          return LeaveGroupConfirmScreen(
+            groupId: args?.groupId ?? '',
+            groupName: args?.groupName ?? '',
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/groups/invite',
+        builder: (context, state) {
+          final args = state.extra as InviteArgs?;
+          return InviteScreen(
+            groupId: args?.groupId ?? '',
+            groupName: args?.groupName ?? '',
+          );
+        },
       ),
 
       if (Env.isDevProfile)
