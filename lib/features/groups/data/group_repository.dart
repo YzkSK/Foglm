@@ -21,6 +21,10 @@ abstract class GroupRepository {
   Future<void> joinGroupByCode({required String code});
 
   Future<void> leaveGroup({required String groupId});
+
+  Future<String> createInviteCode({required String groupId});
+
+  Future<String?> getInviteCode({required String groupId});
 }
 
 class SupabaseGroupRepository implements GroupRepository {
@@ -87,6 +91,28 @@ class SupabaseGroupRepository implements GroupRepository {
       'leave_group',
       params: {'p_group_id': groupId},
     );
+  }
+
+  @override
+  Future<String> createInviteCode({required String groupId}) async {
+    final row = await _client.rpc<Map<String, dynamic>>(
+      'create_invite_code',
+      params: {'p_group_id': groupId},
+    );
+    return row['code'] as String;
+  }
+
+  @override
+  Future<String?> getInviteCode({required String groupId}) async {
+    // create_invite_codeは呼ぶたびに既存のコードを新しいものへ置き換えてしまうため、
+    // 招待画面表示時は既存コードの有無をまず直接selectで確認する
+    // (RLS: invite_codes_select_active_member)。
+    final row = await _client
+        .from('invite_codes')
+        .select('code')
+        .eq('group_id', groupId)
+        .maybeSingle();
+    return row?['code'] as String?;
   }
 }
 
