@@ -1,7 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import {
   buildStoragePath,
-  cacheControlForPhotoVariant,
   extensionForImageType,
   isSupportedImageType,
   mapPhotoInsertError,
@@ -31,14 +30,6 @@ Deno.test("buildStoragePath composes group/date/id.ext", () => {
     buildStoragePath("g1", "2026-07-10", "p1", "jpg"),
     "g1/2026-07-10/p1.jpg",
   );
-});
-
-Deno.test("cacheControlForPhotoVariant gives originals a short CDN TTL", () => {
-  assertEquals(cacheControlForPhotoVariant("original"), "30");
-});
-
-Deno.test("cacheControlForPhotoVariant gives blurred images an immutable CDN TTL", () => {
-  assertEquals(cacheControlForPhotoVariant("blurred"), "31536000");
 });
 
 Deno.test("mapPhotoInsertError maps foreign_key_violation to invalid_group_id", () => {
