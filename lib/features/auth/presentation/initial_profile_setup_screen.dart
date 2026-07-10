@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/widgets/form_status_text.dart';
 import 'package:foglm/features/auth/application/sign_out_controller.dart';
 import 'package:foglm/features/auth/application/update_profile_controller.dart';
 import 'package:foglm/features/auth/data/my_profile_provider.dart';
@@ -141,15 +142,11 @@ class _InitialProfileSetupScreenState
                         labelText: 'アイコン画像URL(任意)',
                       ),
                     ),
-                    if (_hasSubmitted && updateState.hasError) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'プロフィールの保存に失敗しました。時間をおいて再度お試しください',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
+                    FormStatusText(
+                      message: _hasSubmitted && updateState.hasError
+                          ? 'プロフィールの保存に失敗しました。時間をおいて再度お試しください'
+                          : null,
+                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: isLoading ? null : _submit,
