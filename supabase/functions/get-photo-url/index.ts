@@ -51,12 +51,16 @@ export async function getPhotoUrl(
     photo.blurred_storage_path,
   );
 
-  const { data: cached } = await adminClient
+  const { data: cached, error: cacheReadError } = await adminClient
     .from("signed_url_cache")
     .select("signed_url, expires_at")
     .eq("bucket", target.bucket)
     .eq("path", target.path)
     .maybeSingle();
+
+  if (cacheReadError) {
+    console.error("[get-photo-url] signed_url_cache read failed:", cacheReadError);
+  }
 
   if (cached) {
     const cachedRow = cached as SignedUrlCacheRow;
