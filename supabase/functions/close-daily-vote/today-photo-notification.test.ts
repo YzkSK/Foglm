@@ -45,9 +45,11 @@ Deno.test("today photo notifier sends the fixed notification and summarizes part
     fakeSupabase({ photo1: "group/photo1.jpg" }),
     JSON.stringify({ project_id: "firebase-project" }),
     baseDependencies({
-      sendMessage: async (accessToken, projectId, token, notification) => {
+      sendMessage: (accessToken, projectId, token, notification) => {
         sent.push({ accessToken, projectId, token, notification });
-        return token === "token-a" ? { ok: true } : { ok: false, error: "NOT_FOUND" };
+        return Promise.resolve(
+          token === "token-a" ? { ok: true } : { ok: false, error: "NOT_FOUND" },
+        );
       },
       logError: (message) => errors.push(message),
     }),
