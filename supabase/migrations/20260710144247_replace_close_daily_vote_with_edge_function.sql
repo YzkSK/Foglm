@@ -11,6 +11,10 @@
 --   select vault.create_secret('<service_role_key>', 'service_role_key');
 create extension if not exists pg_net with schema extensions;
 
+-- pg_cronのunschedule(job_name)は対象ジョブが存在しない場合に例外を送出し、
+-- "not found"専用の型付き例外を提供していない。migration再適用時にもエラーで
+-- 止まらないよう、意図的にwhen othersで例外を握り潰す(直後のcron.scheduleで
+-- ジョブは必ず再登録されるため、ここで失敗してもジョブ状態は自己修復する)。
 do $$
 begin
   perform cron.unschedule('close_daily_vote_daily');
