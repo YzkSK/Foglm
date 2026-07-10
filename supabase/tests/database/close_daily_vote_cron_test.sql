@@ -1,8 +1,10 @@
--- close_daily_vote_daily cron(issue #175): Edge Function化後もpg_cronがnet.http_post経由で
--- close-daily-vote Edge Functionを毎日UTC15:00(日本時間24:00)に起動することを確認する。
+-- close_daily_vote (cron): 投票締め切りロジックはEdge Function(#175)に移行済み。
+-- ここではcronジョブがnet.http_post経由でclose-daily-vote Edge Functionを
+-- 呼び出すよう登録されているかのみを確認する。
 begin;
 select plan(1);
 
+-- Cron registration
 select isnt_empty(
   $$
   select 1 from cron.job

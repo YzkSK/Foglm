@@ -1,5 +1,6 @@
 const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
+const SIGNED_URL_EXPIRES_IN_SECONDS = 3600; // 1 hour
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
@@ -40,7 +41,7 @@ async function signJwt(clientEmail: string, privateKeyPem: string): Promise<stri
     scope: FCM_SCOPE,
     aud: TOKEN_ENDPOINT,
     iat: nowSeconds,
-    exp: nowSeconds + 3600,
+    exp: nowSeconds + SIGNED_URL_EXPIRES_IN_SECONDS,
   };
 
   const unsignedToken = `${base64UrlEncodeString(JSON.stringify(header))}.${
