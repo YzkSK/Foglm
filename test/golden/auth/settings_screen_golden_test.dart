@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:alchemist/alchemist.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/data/my_profile_provider.dart';
@@ -12,10 +13,12 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
 
-Widget _pumpApp({MyProfileRow? profile}) {
+Widget _pumpApp({AuthRepository? repository, MyProfileRow? profile}) {
   return ProviderScope(
     overrides: [
-      authRepositoryProvider.overrideWithValue(_MockAuthRepository()),
+      authRepositoryProvider.overrideWithValue(
+        repository ?? _MockAuthRepository(),
+      ),
       myProfileProvider.overrideWith((ref) async => profile),
     ],
     child: const MaterialApp(home: SettingsScreen()),
@@ -39,6 +42,27 @@ void main() {
       fileName: 'settings_screen_error',
       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
       builder: _pumpApp,
+    ),
+  );
+
+  unawaited(
+    goldenTest(
+      'SettingsScreen shows a loading indicator while signing out',
+      fileName: 'settings_screen_signing_out',
+      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ログアウト'));
+        await tester.pump();
+      },
+      builder: () {
+        final repository = _MockAuthRepository();
+        when(repository.signOut).thenAnswer((_) => Completer<void>().future);
+        return _pumpApp(
+          repository: repository,
+          profile: const MyProfileRow(displayName: 'テストユーザー'),
+        );
+      },
     ),
   );
 }
