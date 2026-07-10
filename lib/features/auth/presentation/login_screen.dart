@@ -15,8 +15,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// ログイン画面(S01)。
 ///
 /// SNSログイン(Google/Apple/X)・メールアドレス/パスワードログインの
-/// 入口(仕様書 3.1 / 4.1 S01)。ログイン済みの場合は、グループ一覧画面
-/// (S03、#36)が未実装のため暫定的なプレースホルダーを表示する。
+/// 入口(仕様書 3.1 / 4.1 S01)。ログイン済みの場合は、この画面から
+/// 自動遷移する導線が未整備なため暫定的なプレースホルダーを表示する。
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -210,8 +210,8 @@ class _LoggedInPlaceholder extends ConsumerWidget {
           const Text('ログイン済み'),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => context.go('/camera'),
-            child: const Text('カメラ'),
+            onPressed: () => context.go('/groups'),
+            child: const Text('グループ一覧'),
           ),
           TextButton(
             onPressed: () =>
