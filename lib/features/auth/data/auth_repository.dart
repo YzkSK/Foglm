@@ -1,5 +1,8 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
+import 'package:foglm/features/auth/domain/delete_account_failure.dart';
 import 'package:foglm/features/auth/domain/password_reset_failure.dart';
 import 'package:foglm/features/auth/domain/sign_in_failure.dart';
 import 'package:foglm/features/auth/domain/sign_up_failure.dart';
@@ -158,12 +161,36 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> deleteAccount() async {
+    try {
+      await _client.functions.invoke('delete-account');
+    } on FunctionException catch (e) {
+      throw mapFunctionExceptionToDeleteAccountFailure(e);
+    } on Object catch (_) {
+      throw const UnknownDeleteAccountFailure();
+    }
+
     // delete-account Edge Function側でも本人のセッションをsignOutしているが、
     // それはサーバー側のセッション(リフレッシュトークン)を無効化するのみで、
     // このFlutterアプリが保持するローカルのセッションキャッシュはクリアされない
     // ため、ここでも明示的にsignOutしてアプリ側の状態を即座に更新する。
-    await _client.functions.invoke('delete-account');
-    await _client.auth.signOut();
+    // ここに到達した時点でサーバー側の削除自体は完了しているため、この
+    // signOutが失敗しても例外は投げない(投げてしまうとUI上は削除失敗と
+    // 誤表示され、ユーザーが再試行して削除済みアカウントに対して
+    // delete-accountを再度呼んでしまう)。ローカルセッションが残っても、
+    // 削除成功時に呼び出し元がcurrentPublicUserProviderを再評価すれば
+    // 本人のusers行は既に存在しないため未ログイン扱いとなり、ルーターの
+    // redirectでログイン画面へ戻る(仕様書 3.1.3参照)。
+    try {
+      await _client.auth.signOut();
+    } on Object catch (e, stackTrace) {
+      developer.log(
+        'signOut after deleteAccount failed (server-side deletion already '
+        'succeeded)',
+        name: 'SupabaseAuthRepository',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 }
 
