@@ -17,7 +17,7 @@ void main() {
       // pumpする戦略を使う。
       pumpBeforeTest: pumpNTimes(10),
       builder: () => const ProviderScope(
-        child: MaterialApp(home: CameraScreen()),
+        child: MaterialApp(home: CameraScreen(groupId: 'test-group-id')),
       ),
     ),
   );
