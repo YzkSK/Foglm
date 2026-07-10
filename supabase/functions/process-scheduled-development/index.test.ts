@@ -1,6 +1,10 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert@1";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
-import { aggregateDevelopedCountsByGroup, processScheduledDevelopment } from "./index.ts";
+import {
+  aggregateDevelopedCountsByGroup,
+  notifyDevelopmentBestEffort,
+  processScheduledDevelopment,
+} from "./index.ts";
 
 interface QueryCalls {
   table?: string;
@@ -102,6 +106,72 @@ Deno.test("processScheduledDevelopment propagates a photo update error", async (
     Error,
     "photosの現像更新に失敗しました: update failed",
   );
+});
+
+Deno.test("processScheduledDevelopment notifies each group with its developed count", async () => {
+  const executionTime = "2026-01-10T12:00:00.000Z";
+  const { supabase } = createSupabaseStub({
+    data: [{ group_id: "g1" }, { group_id: "g1" }, { group_id: "g2" }],
+    error: null,
+  });
+  const calls: [string, number][] = [];
+
+  await processScheduledDevelopment(supabase, executionTime, {
+    notifyDevelopment: (groupId, developedCount) => {
+      calls.push([groupId, developedCount]);
+      return Promise.resolve({ sentCount: 1, failedCount: 0 });
+    },
+  });
+
+  assertEquals(calls, [["g1", 2], ["g2", 1]]);
+});
+
+Deno.test("processScheduledDevelopment continues when a group's notification fails", async () => {
+  const executionTime = "2026-01-10T12:00:00.000Z";
+  const { supabase } = createSupabaseStub({
+    data: [{ group_id: "g1" }, { group_id: "g2" }],
+    error: null,
+  });
+  const errors: string[] = [];
+
+  const result = await processScheduledDevelopment(supabase, executionTime, {
+    notifyDevelopment: () => Promise.reject(new Error("FCM unavailable")),
+    logNotificationError: (message) => errors.push(message),
+  });
+
+  assertEquals(result.developedGroupCounts, [
+    { groupId: "g1", developedCount: 1 },
+    { groupId: "g2", developedCount: 1 },
+  ]);
+  assertEquals(errors, [
+    "集約現像通知に失敗しました: FCM unavailable",
+    "集約現像通知に失敗しました: FCM unavailable",
+  ]);
+});
+
+Deno.test("notifyDevelopmentBestEffort forwards the group ID and developed count", async () => {
+  const calls: [string, number][] = [];
+  await notifyDevelopmentBestEffort(
+    (groupId, developedCount) => {
+      calls.push([groupId, developedCount]);
+      return Promise.resolve({ sentCount: 1, failedCount: 0 });
+    },
+    "group-1",
+    3,
+    () => {},
+  );
+  assertEquals(calls, [["group-1", 3]]);
+});
+
+Deno.test("notifyDevelopmentBestEffort logs and swallows notification errors", async () => {
+  const errors: string[] = [];
+  await notifyDevelopmentBestEffort(
+    () => Promise.reject(new Error("FCM unavailable")),
+    "group-1",
+    3,
+    (message) => errors.push(message),
+  );
+  assertEquals(errors, ["集約現像通知に失敗しました: FCM unavailable"]);
 });
 
 // --- 認可チェック (X-Cron-Secret) のユニットテスト ---

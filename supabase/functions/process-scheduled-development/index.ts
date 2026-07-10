@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { jsonResponse } from "../_shared/http.ts";
+import { createDevelopmentNotifier, type DevelopmentNotifier } from "./development-notification.ts";
 
 interface GroupIdRow {
   group_id: string;
@@ -27,9 +28,27 @@ export interface ProcessScheduledDevelopmentResult {
   developedGroupCounts: DevelopedGroupCount[];
 }
 
-/** group単位の現像件数集計後に呼び出す通知フックポイント。集約現像通知の送信は別issueで対応するため未実装。 */
-function notifyDevelopment(_groupId: string, _developedCount: number): void {
-  // 集約現像通知の送信は別issueで対応する(issue #176のスコープ外)。
+const noOpNotifier: DevelopmentNotifier = () => Promise.resolve({ sentCount: 0, failedCount: 0 });
+
+export interface ProcessScheduledDevelopmentDependencies {
+  notifyDevelopment?: DevelopmentNotifier;
+  logNotificationError?: (message: string) => void;
+}
+
+/** 通知失敗をログへ記録し、現像更新処理には伝播させない。 */
+export async function notifyDevelopmentBestEffort(
+  notifyDevelopment: DevelopmentNotifier,
+  groupId: string,
+  developedCount: number,
+  logError: (message: string) => void = console.error,
+): Promise<void> {
+  try {
+    await notifyDevelopment(groupId, developedCount);
+  } catch (error) {
+    logError(
+      `集約現像通知に失敗しました: ${error instanceof Error ? error.message : "unknown"}`,
+    );
+  }
 }
 
 /**
@@ -41,7 +60,13 @@ function notifyDevelopment(_groupId: string, _developedCount: number): void {
 export async function processScheduledDevelopment(
   supabase: SupabaseClient,
   now: string = new Date().toISOString(),
+  dependencies: ProcessScheduledDevelopmentDependencies = {},
 ): Promise<ProcessScheduledDevelopmentResult> {
+  const resolvedDependencies: Required<ProcessScheduledDevelopmentDependencies> = {
+    notifyDevelopment: dependencies.notifyDevelopment ?? noOpNotifier,
+    logNotificationError: dependencies.logNotificationError ?? console.error,
+  };
+
   const { data: updatedPhotos, error: updateError } = await supabase
     .from("photos")
     .update({ status: "developed", developed_at: now })
@@ -58,7 +83,12 @@ export async function processScheduledDevelopment(
 
   const developedGroupCounts: DevelopedGroupCount[] = [];
   for (const [groupId, developedCount] of groupCounts) {
-    notifyDevelopment(groupId, developedCount);
+    await notifyDevelopmentBestEffort(
+      resolvedDependencies.notifyDevelopment,
+      groupId,
+      developedCount,
+      resolvedDependencies.logNotificationError,
+    );
     developedGroupCounts.push({ groupId, developedCount });
   }
 
@@ -78,9 +108,13 @@ if (import.meta.main) {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const notifyDevelopment = createDevelopmentNotifier(
+      supabase,
+      Deno.env.get("FIREBASE_SERVICE_ACCOUNT") ?? "",
+    );
 
     try {
-      const result = await processScheduledDevelopment(supabase);
+      const result = await processScheduledDevelopment(supabase, undefined, { notifyDevelopment });
       return jsonResponse(200, { developedGroupCounts: result.developedGroupCounts });
     } catch (error) {
       console.error("[process-scheduled-development] processScheduledDevelopment failed:", error);
