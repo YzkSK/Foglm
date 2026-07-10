@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(9);
 
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000061'),
@@ -32,10 +32,36 @@ select is(
   'avatar_urlが更新される'
 );
 
+select isnt(
+  (select profile_completed_at from public.users where id = '00000000-0000-0000-0000-000000000061'),
+  null,
+  'update_profile sets profile_completed_at on first completion'
+);
+
 select is(
   (select display_name from public.users where id = '00000000-0000-0000-0000-000000000062'),
   'Other User',
   '他人の行は更新されない'
+);
+
+update public.users
+set profile_completed_at = '2026-07-01 00:00:00+00'
+where id = '00000000-0000-0000-0000-000000000061';
+
+set local role authenticated;
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-000000000061"}';
+
+select lives_ok(
+  $$ select public.update_profile('Second Name', null) $$,
+  'update_profile can run after profile_completed_at is already set'
+);
+
+reset role;
+
+select is(
+  (select profile_completed_at from public.users where id = '00000000-0000-0000-0000-000000000061'),
+  '2026-07-01 00:00:00+00'::timestamptz,
+  'update_profile keeps existing profile_completed_at'
 );
 
 set local role authenticated;
