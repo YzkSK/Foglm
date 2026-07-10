@@ -14,7 +14,7 @@ final currentPublicUserProvider = FutureProvider<PublicUserRow?>((ref) async {
 
   final row = await client
       .from('users')
-      .select()
+      .select('auth_provider, email_verified, profile_completed_at')
       .eq('id', userId)
       .maybeSingle();
   if (row == null) {
