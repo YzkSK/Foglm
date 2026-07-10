@@ -225,7 +225,8 @@ select ok(
   'leave_group delegates created_by to a remaining active member'
 );
 
--- 固定グループで作成者が唯一のメンバーとして脱退した場合(残り0人)は委譲しない
+-- 固定グループで作成者が唯一のメンバーとして脱退した場合(残り0人)は委譲せず、
+-- 即座に解散(グループ行ごと完全削除)される(#16)
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-000000000064"}';
 
@@ -236,10 +237,9 @@ select lives_ok(
 
 reset role;
 
-select is(
-  (select created_by from public.groups where id = '32000000-0000-0000-0000-000000000002'),
-  '00000000-0000-0000-0000-000000000064'::uuid,
-  'leave_group does not delegate created_by when no active members remain'
+select is_empty(
+  $$ select 1 from public.groups where id = '32000000-0000-0000-0000-000000000002' $$,
+  'leave_group dissolves the group immediately once no active members remain'
 );
 
 -- イベントグループには解散機能がないため、作成者脱退時も委譲しない
