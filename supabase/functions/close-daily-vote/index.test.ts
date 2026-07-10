@@ -77,6 +77,8 @@ Deno.test("notifyWinnerBestEffort logs and swallows notification errors", async 
     (message) => errors.push(message),
   );
   assertEquals(errors, ["今日の1枚通知に失敗しました: FCM unavailable"]);
+});
+
 // --- 認可チェック (X-Cron-Secret) のユニットテスト ---
 // Deno.serve ハンドラを直接呼び出す代わりに、ハンドラの認可チェックロジックのみを
 // 再現したミニハンドラでシミュレートする。
