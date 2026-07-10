@@ -156,9 +156,32 @@ Deno.test("closeDailyVote processes majority/tie/zero-vote daily_votes and skips
     await createPhoto(futureGroup, userA, FUTURE_VOTE_DATE, "p7");
     const futureVote = await createDailyVote(futureGroup, FUTURE_VOTE_DATE);
 
-    const result = await closeDailyVote(supabase, TODAY);
+    const notificationCalls: Array<{ groupId: string; photoId: string }> = [];
+    const notificationErrors: string[] = [];
+    const result = await closeDailyVote(supabase, TODAY, {
+      notifyWinner: async (groupId, photoId) => {
+        const { data: photo } = await supabase.from("photos").select("status").eq(
+          "id",
+          photoId,
+        ).single();
+        const { data: vote } = await supabase.from("daily_votes").select("status")
+          .eq("group_id", groupId).eq("vote_date", VOTE_DATE).single();
+        assertEquals(photo?.status, "developed");
+        assertEquals(vote?.status, "closed");
+        notificationCalls.push({ groupId, photoId });
+        if (groupId === majorityGroup) {
+          throw new Error("simulated notification failure");
+        }
+        return { sentCount: 1, failedCount: 0 };
+      },
+      logNotificationError: (message) => notificationErrors.push(message),
+    });
 
     assertEquals(result.processedCount, 3);
+    assertEquals(notificationCalls.length, 3);
+    assertEquals(notificationErrors, [
+      "今日の1枚通知に失敗しました: simulated notification failure",
+    ]);
 
     // Scenario 1 assertions
     const { data: photo1 } = await supabase.from("photos").select("status, developed_at").eq(
