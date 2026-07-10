@@ -24,8 +24,11 @@ const allowedWhenUnauthenticatedPaths = {
 /// 初回プロフィール設定(S02)未完了のユーザーでも遷移を許可するパス。
 /// 撮影・投票・アルバム閲覧などの主要機能画面は今後の別issueで追加され次第、
 /// この一覧に含めない(=自動的にガード対象になる)想定。
+/// `'/'`は含めない: ログイン済みユーザーが`'/'`(ログイン画面)へ着地した際に
+/// プロフィール設定画面へ自動的にリダイレクトさせるため
+/// (`allowedWhenUnverifiedPaths`と異なり、こちらは新規追加のガードなので
+/// この動作を最初から正しくする)。
 const allowedWhenProfileIncompletePaths = {
-  '/',
   '/signup',
   '/verify-pending',
   '/profile/setup',

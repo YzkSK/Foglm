@@ -106,6 +106,15 @@ void main() {
       final result = profileSetupRedirect(user: user, location: '/debug');
       expect(result, isNull);
     });
+
+    test(
+      'redirects an incomplete-profile user landing on the login screen path',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(user: user, location: '/');
+        expect(result, '/profile/setup');
+      },
+    );
   });
 
   group('authRequiredRedirect', () {
