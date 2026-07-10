@@ -32,6 +32,17 @@
 - 上記いずれのロジックも、時刻やDBアクセスなど外部要因に依存する部分は抽象化し、単体テストでは`mocktail`(Flutter側)またはDenoの標準的なスタブ手法(Edge Functions側)で差し替えられるようにする。
 - 単体テストで検証しきれない排他制御・実DBが絡む挙動は、integration testとして別途検討する(本ドキュメントの対象外。必要になった時点で別Issueとする)。
 
+## Edge Functionのユニットテスト / integration test
+
+Supabase Edge Functions(`supabase/functions/`)のテストは、依存の有無で2種類に分ける。
+
+- **ユニットテスト**(`*.test.ts`): `SupabaseClient` をモック(スタブ)で差し替え、実DBに依存せず実行する。既存の `supabase/functions/_shared/*.test.ts` を参照。ローカル・CIともに常時実行する。
+- **integration test**(`*.integration.test.ts`): ローカルSupabase(実DB)に対して実際に読み書きし、検証する。ファイル名は必ず `*.integration.test.ts` とし、対象コードと同階層に置く(ユニットテストと同じ配置規約)。
+  - `Deno.env.get("SUPABASE_URL")` / `Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")` を読み、`createClient` で service_role権限のクライアントを生成する。未設定の場合は例外を投げて即失敗させる(スキップしない)。
+  - pgTAPの `begin; ... rollback;` に相当する自動ロールバックが無いため、**テスト自身が作成した行をテスト末尾(`finally` 等)で必ず削除する**。テストデータのIDは `crypto.randomUUID()` 等で他テストと衝突しない値にする。
+  - CI(`deno-ci` ジョブ)は `npx supabase start` でローカルSupabaseを起動した上で、ユニットテストとintegration testを別ステップで実行する(`.github/workflows/ci.yml` 参照)。
+  - ローカルで実行する場合は、事前に `dart run tool/supabase_start.dart` 等でローカルSupabaseを起動し、`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` を環境変数に設定してから `deno test --allow-net --allow-env` を実行する。
+
 ## Golden Test(UIの見た目のテスト)
 
 - UIコンポーネント・画面の見た目を検証するGolden Testには`alchemist`パッケージを使う(golden_toolkitはdiscontinuedのため不採用)。
