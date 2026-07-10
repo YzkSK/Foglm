@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 
@@ -11,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check for duplicate migration timestamps
         run: |
@@ -24,6 +27,34 @@ jobs:
             done
             exit 1
           fi
+
+      - name: Check for migration timestamp inversion against main
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main --depth=1
+          main_max=$(git ls-tree -r --name-only origin/main -- supabase/migrations \
+            | grep -E '/[0-9]{14}_.*\.sql$' \
+            | sed -E 's#.*/([0-9]{14})_.*#\1#' \
+            | sort | tail -1)
+
+          if [ -z "$main_max" ]; then
+            exit 0
+          fi
+
+          new_files=$(comm -13 \
+            <(git ls-tree -r --name-only origin/main -- supabase/migrations | sort) \
+            <(ls supabase/migrations | sed 's#^#supabase/migrations/#' | sort))
+
+          failed=0
+          for f in $new_files; do
+            ts=$(basename "$f" | grep -oE '^[0-9]{14}')
+            if [ -n "$ts" ] && [ "$ts" \< "$main_max" ]; then
+              echo "::error::$f のタイムスタンプ($ts)がmainの最新マイグレーション($main_max)より古いため、supabase db pushが失敗します。npx supabase migration new でタイムスタンプを取り直してください。"
+              failed=1
+            fi
+          done
+
+          exit $failed
 
   flutter-ci:
     runs-on: ubuntu-latest
