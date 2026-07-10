@@ -95,4 +95,23 @@ void main() {
       },
     ),
   );
+
+  unawaited(
+    goldenTest(
+      'EmailVerificationPendingScreen shows a loading indicator while '
+      'signing out',
+      fileName: 'email_verification_pending_screen_signing_out',
+      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ログアウト'));
+        await tester.pump();
+      },
+      builder: () {
+        final repository = _MockAuthRepository();
+        when(repository.signOut).thenAnswer((_) => Completer<void>().future);
+        return _pumpApp(repository);
+      },
+    ),
+  );
 }
