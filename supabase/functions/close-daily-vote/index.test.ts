@@ -1,5 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import {
+  notifyWinnerBestEffort,
   pickRandomPhotoId,
   pickTopPhotoId,
   randomDevelopScheduledDate,
@@ -51,6 +52,31 @@ Deno.test("randomDevelopScheduledDate stays within takenDate + 3..14 days", () =
   const latest = randomDevelopScheduledDate("2026-07-01", () => 0.999999);
   assertEquals(earliest, "2026-07-04T00:00:00.000Z");
   assertEquals(latest, "2026-07-15T00:00:00.000Z");
+});
+
+Deno.test("notifyWinnerBestEffort forwards the group and winner photo IDs", async () => {
+  const calls: string[][] = [];
+  await notifyWinnerBestEffort(
+    (groupId, photoId) => {
+      calls.push([groupId, photoId]);
+      return Promise.resolve({ sentCount: 1, failedCount: 0 });
+    },
+    "group-1",
+    "photo-1",
+    () => {},
+  );
+  assertEquals(calls, [["group-1", "photo-1"]]);
+});
+
+Deno.test("notifyWinnerBestEffort logs and swallows notification errors", async () => {
+  const errors: string[] = [];
+  await notifyWinnerBestEffort(
+    () => Promise.reject(new Error("FCM unavailable")),
+    "group-1",
+    "photo-1",
+    (message) => errors.push(message),
+  );
+  assertEquals(errors, ["今日の1枚通知に失敗しました: FCM unavailable"]);
 });
 
 // --- 認可チェック (X-Cron-Secret) のユニットテスト ---

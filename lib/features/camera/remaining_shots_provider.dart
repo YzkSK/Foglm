@@ -15,6 +15,13 @@ class RemainingShotsNotifier extends Notifier<int> {
       state = state - 1;
     }
   }
+
+  /// サーバー側が上限超過(`daily_limit_reached`)を返した場合に呼ぶ。
+  /// 他メンバーの撮影等でローカルの残数カウントとサーバーの実際の残数が
+  /// ずれていた場合でも、これ以上の撮影操作を止める。
+  void reachedLimit() {
+    state = 0;
+  }
 }
 
 final remainingShotsProvider = NotifierProvider<RemainingShotsNotifier, int>(

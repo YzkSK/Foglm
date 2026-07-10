@@ -11,8 +11,7 @@ const _maxEventStartDateDaysAhead = 365;
 /// イベントグループ作成画面(S04b)。
 ///
 /// イベント名・開始日・終了日を入力して作成する(仕様書 3.11 / 4.1 S04b)。
-/// グループ一覧画面(S03、#36)が未実装のため、作成成功後は暫定的に
-/// カメラ画面('/camera')へ遷移する。
+/// 作成成功後はグループ一覧画面(S03)へ戻る。
 class CreateEventGroupScreen extends ConsumerStatefulWidget {
   const CreateEventGroupScreen({super.key});
 
@@ -103,7 +102,7 @@ class _CreateEventGroupScreenState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('イベントグループを作成しました')));
-      context.go('/camera');
+      context.go('/groups');
     }
   }
 
