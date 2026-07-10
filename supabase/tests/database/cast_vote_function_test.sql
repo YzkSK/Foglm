@@ -1,4 +1,6 @@
 -- cast_vote: 「今日の1枚」投票の登録・更新RPCを検証する(issue #24 / 仕様書 3.5・5.1・6.4参照)。
+-- check_photo_daily_limitトリガーがtaken_dateをAsia/Tokyo基準で上書きするため、
+-- vote_date/taken_atもJST基準に揃える(issue #187)。
 begin;
 select plan(10);
 
@@ -20,12 +22,14 @@ values ('c2000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-0000000
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path, status)
 values
   ('c3000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001',
-   now(), current_date, 'vote/photo1_original.jpg', 'vote/photo1_blurred.jpg', 'pending_vote'),
+   (((current_timestamp at time zone 'Asia/Tokyo')::date) + time '12:00') at time zone 'Asia/Tokyo',
+   (current_timestamp at time zone 'Asia/Tokyo')::date, 'vote/photo1_original.jpg', 'vote/photo1_blurred.jpg', 'pending_vote'),
   ('c3000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001',
-   now(), current_date, 'vote/photo2_original.jpg', 'vote/photo2_blurred.jpg', 'pending_vote');
+   (((current_timestamp at time zone 'Asia/Tokyo')::date) + time '12:00') at time zone 'Asia/Tokyo',
+   (current_timestamp at time zone 'Asia/Tokyo')::date, 'vote/photo2_original.jpg', 'vote/photo2_blurred.jpg', 'pending_vote');
 
 insert into public.daily_votes (id, group_id, vote_date, status)
-values ('c4000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', current_date, 'open');
+values ('c4000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', (current_timestamp at time zone 'Asia/Tokyo')::date, 'open');
 
 -- 締切済みのdaily_votesを持つ別グループ・別写真
 insert into public.groups (id, name, mode, created_by)
@@ -37,11 +41,12 @@ values ('c2000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-0000000
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path, status)
 values (
   'c3000000-0000-0000-0000-000000000003', 'c2000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001',
-  now(), current_date, 'vote/photo3_original.jpg', 'vote/photo3_blurred.jpg', 'pending_vote'
+  (((current_timestamp at time zone 'Asia/Tokyo')::date) + time '12:00') at time zone 'Asia/Tokyo',
+  (current_timestamp at time zone 'Asia/Tokyo')::date, 'vote/photo3_original.jpg', 'vote/photo3_blurred.jpg', 'pending_vote'
 );
 
 insert into public.daily_votes (id, group_id, vote_date, status)
-values ('c4000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', current_date, 'closed');
+values ('c4000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', (current_timestamp at time zone 'Asia/Tokyo')::date, 'closed');
 
 -- 撮影0枚(daily_votesが存在しない)グループ
 insert into public.groups (id, name, mode, created_by)
@@ -53,7 +58,8 @@ values ('c2000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-0000000
 insert into public.photos (id, group_id, taken_by, taken_at, taken_date, original_storage_path, blurred_storage_path, status)
 values (
   'c3000000-0000-0000-0000-000000000004', 'c2000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000001',
-  now(), current_date, 'vote/photo4_original.jpg', 'vote/photo4_blurred.jpg', 'pending_vote'
+  (((current_timestamp at time zone 'Asia/Tokyo')::date) + time '12:00') at time zone 'Asia/Tokyo',
+  (current_timestamp at time zone 'Asia/Tokyo')::date, 'vote/photo4_original.jpg', 'vote/photo4_blurred.jpg', 'pending_vote'
 );
 
 -- =====================================================================
