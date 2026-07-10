@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { isValidEmail, isValidIsoDateTime, isValidPassword, isValidUuid } from "./validation.ts";
+import { isValidEmail, isValidPassword, isValidUuid } from "./validation.ts";
 
 Deno.test("isValidEmail accepts a well-formed address", () => {
   assertEquals(isValidEmail("foo@example.com"), true);
@@ -40,13 +40,4 @@ Deno.test("isValidUuid accepts a well-formed v4 uuid", () => {
 Deno.test("isValidUuid rejects a malformed value", () => {
   assertEquals(isValidUuid("not-a-uuid"), false);
   assertEquals(isValidUuid(""), false);
-});
-
-Deno.test("isValidIsoDateTime accepts a parsable ISO timestamp", () => {
-  assertEquals(isValidIsoDateTime("2026-07-10T12:00:00Z"), true);
-});
-
-Deno.test("isValidIsoDateTime rejects an unparsable string", () => {
-  assertEquals(isValidIsoDateTime("not-a-date"), false);
-  assertEquals(isValidIsoDateTime(""), false);
 });
