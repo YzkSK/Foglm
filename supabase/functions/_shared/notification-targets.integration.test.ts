@@ -29,6 +29,8 @@ Deno.test("getActiveGroupMemberFcmTokens returns tokens registered by active mem
     throw new Error(`テストユーザーの作成に失敗しました: ${authError?.message}`);
   }
   const userId = authUser.user.id;
+  let groupId: string | undefined;
+  let groupCleanupError: Error | undefined;
 
   try {
     // auth.admin.createUser時にon_auth_user_createdトリガー(handle_new_user)がpublic.usersへ
@@ -51,6 +53,7 @@ Deno.test("getActiveGroupMemberFcmTokens returns tokens registered by active mem
     if (groupError || !group) {
       throw new Error(`groupsの作成に失敗しました: ${groupError?.message}`);
     }
+    groupId = group.id;
 
     const { error: memberError } = await supabase
       .from("group_members")
@@ -62,15 +65,20 @@ Deno.test("getActiveGroupMemberFcmTokens returns tokens registered by active mem
     const tokens = await getActiveGroupMemberFcmTokens(supabase, group.id);
 
     assertEquals(tokens, ["integration-test-token"]);
-
-    const { error: deleteGroupError } = await supabase
-      .from("groups")
-      .delete()
-      .eq("id", group.id);
-    if (deleteGroupError) {
-      throw new Error(`groupsの後片付けに失敗しました: ${deleteGroupError.message}`);
-    }
   } finally {
+    if (groupId) {
+      const { error: deleteGroupError } = await supabase
+        .from("groups")
+        .delete()
+        .eq("id", groupId);
+      if (deleteGroupError) {
+        groupCleanupError = new Error(`groupsの後片付けに失敗しました: ${deleteGroupError.message}`);
+      }
+    }
     await supabase.auth.admin.deleteUser(userId);
+  }
+
+  if (groupCleanupError) {
+    throw groupCleanupError;
   }
 });
