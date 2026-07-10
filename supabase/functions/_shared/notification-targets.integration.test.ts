@@ -75,7 +75,10 @@ Deno.test("getActiveGroupMemberFcmTokens returns tokens registered by active mem
         groupCleanupError = new Error(`groupsの後片付けに失敗しました: ${deleteGroupError.message}`);
       }
     }
-    await supabase.auth.admin.deleteUser(userId);
+    const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
+    if (deleteUserError && !groupCleanupError) {
+      groupCleanupError = new Error(`テストユーザーの後片付けに失敗しました: ${deleteUserError.message}`);
+    }
   }
 
   if (groupCleanupError) {
