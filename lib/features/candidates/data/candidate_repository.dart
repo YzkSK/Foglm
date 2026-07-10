@@ -48,31 +48,6 @@ class SupabaseCandidateRepository implements CandidateRepository {
       return [];
     }
 
-    final dailyVote = await _client
-        .from('daily_votes')
-        .select('id')
-        .eq('group_id', groupId)
-        .eq('vote_date', today)
-        .maybeSingle();
-
-    var votes = <({String userId, String photoId})>[];
-    if (dailyVote != null) {
-      // RLS(vote_entries_select_active_member)により、自分が現役メンバーの
-      // グループの投票のみ返る。
-      final voteRows = await _client
-          .from('vote_entries')
-          .select('user_id, photo_id')
-          .eq('daily_vote_id', dailyVote['id'] as String);
-      votes = voteRows
-          .map(
-            (row) => (
-              userId: row['user_id'] as String,
-              photoId: row['photo_id'] as String,
-            ),
-          )
-          .toList();
-    }
-
     final photos = photoRows
         .map(
           (row) => (
@@ -81,6 +56,65 @@ class SupabaseCandidateRepository implements CandidateRepository {
           ),
         )
         .toList();
+
+    // 得票状況の取得と署名付きURLの発行は互いに依存しないため、直列に
+    // 待たず並行に実行してラウンドトリップの合計待ち時間を縮める
+    // (Dartのasync関数は呼び出した時点で実行が始まるため、await前に
+    // 両方のFutureを生成しておけば並行実行になる)。
+    final votesFuture = _fetchVotes(groupId: groupId, today: today);
+    final blurredUrlsFuture = _fetchBlurredUrls(photos);
+
+    return buildCandidateRows(
+      photos: photos,
+      votes: await votesFuture,
+      currentUserId: _client.auth.currentUser?.id,
+      blurredUrlsByPath: await blurredUrlsFuture,
+    );
+  }
+
+  Future<List<({String userId, String photoId})>> _fetchVotes({
+    required String groupId,
+    required String today,
+  }) async {
+    final dailyVote = await _client
+        .from('daily_votes')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('vote_date', today)
+        .maybeSingle();
+
+    if (dailyVote == null) {
+      // upload-photo Edge Functionが撮影のたびにdaily_votesをUPSERTで
+      // 必ず作成するため、候補写真(photoRows)が存在する時点でdaily_votes
+      // も存在するはず。それでもnullだった場合は不整合として記録した上で、
+      // 一覧表示自体は継続させる(0票として扱う)。
+      developer.log(
+        'daily_votes row not found despite existing candidate photos '
+        '(group: $groupId, date: $today)',
+        name: 'SupabaseCandidateRepository',
+      );
+      return [];
+    }
+
+    // RLS(vote_entries_select_active_member)により、自分が現役メンバーの
+    // グループの投票のみ返る。
+    final voteRows = await _client
+        .from('vote_entries')
+        .select('user_id, photo_id')
+        .eq('daily_vote_id', dailyVote['id'] as String);
+    return voteRows
+        .map(
+          (row) => (
+            userId: row['user_id'] as String,
+            photoId: row['photo_id'] as String,
+          ),
+        )
+        .toList();
+  }
+
+  Future<Map<String, String>> _fetchBlurredUrls(
+    List<({String id, String blurredStoragePath})> photos,
+  ) async {
     final signedUrlResults = await _client.storage
         .from('photo-blurred')
         .createSignedUrlsResult(
@@ -102,13 +136,7 @@ class SupabaseCandidateRepository implements CandidateRepository {
           );
       }
     }
-
-    return buildCandidateRows(
-      photos: photos,
-      votes: votes,
-      currentUserId: _client.auth.currentUser?.id,
-      blurredUrlsByPath: blurredUrlsByPath,
-    );
+    return blurredUrlsByPath;
   }
 }
 
