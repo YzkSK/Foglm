@@ -1,3 +1,5 @@
+import { CACHE_REFRESH_BUFFER_SECONDS } from "../_shared/photo-cache.ts";
+
 export type PhotoStorageBucket = "photo-originals" | "photo-blurred";
 
 export interface StorageTarget {
@@ -19,7 +21,8 @@ export function resolveStorageTarget(
 
 // キャッシュされたURLの残り有効時間がこの秒数以下の場合、クライアントに渡さず再発行する
 // (まもなく失効するURLを配ってCDNキャッシュに乗せてしまうのを防ぐ)。
-export const CACHE_REFRESH_BUFFER_SECONDS = 30;
+// 値の定義自体は_shared/photo-cache.tsを参照(upload-photoのcacheControlと足並みを揃える必要があるため)。
+export { CACHE_REFRESH_BUFFER_SECONDS };
 
 export function remainingSeconds(expiresAt: Date, now: Date): number {
   return Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));

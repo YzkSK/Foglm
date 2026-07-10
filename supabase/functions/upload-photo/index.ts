@@ -4,6 +4,7 @@ import { isValidUuid } from "../_shared/validation.ts";
 import { jsonResponse } from "../_shared/http.ts";
 import {
   buildStoragePath,
+  cacheControlForPhotoVariant,
   extensionForImageType,
   isSupportedImageType,
   mapPhotoInsertError,
@@ -13,10 +14,6 @@ import {
 // ボヤけ版のサイズ・ぼかし強度。原本を復元不可能な程度まで縮小・ぼかす(仕様書 8.1参照)。
 const BLURRED_WIDTH = 32;
 const BLURRED_BLUR_SIGMA = 12;
-
-// ボヤけ版の保存パスはUUIDベースで不変(同一パスへの再アップロードは発生しない)上、
-// 機微データではないため、CDN・ブラウザともに長期キャッシュしてよい(仕様書 8.2参照)。
-const IMMUTABLE_CACHE_CONTROL_SECONDS = "31536000";
 
 Deno.serve(async (req: Request) => {
   let form: FormData;
@@ -114,11 +111,14 @@ Deno.serve(async (req: Request) => {
 
   // 原本は現像後に署名付きURL経由でのみ配信される非公開データ(仕様書 8.1参照)。
   // 長期キャッシュを設定すると、CDNが署名トークンをキャッシュキーに含めない場合に
-  // 非署名アクセスへ晒される恐れがあるため、原本には長期cacheControlを設定しない。
+  // 非署名アクセスへ晒される恐れがある(issue #166参照)。そのため、get-photo-urlが
+  // 署名URLを再発行するまでのバッファ秒数(CACHE_REFRESH_BUFFER_SECONDS)と揃えた
+  // 短いCDN TTLのみを設定し、現像直後の集中アクセスを吸収しつつ残留配信は抑える。
   const { error: originalUploadError } = await adminClient.storage
     .from("photo-originals")
     .upload(originalPath, originalBytes, {
       contentType: file.type,
+      cacheControl: cacheControlForPhotoVariant("original"),
     });
   if (originalUploadError) {
     return jsonResponse(500, { error: "upload_failed" });
@@ -128,7 +128,7 @@ Deno.serve(async (req: Request) => {
     .from("photo-blurred")
     .upload(blurredPath, blurredBytes, {
       contentType: "image/jpeg",
-      cacheControl: IMMUTABLE_CACHE_CONTROL_SECONDS,
+      cacheControl: cacheControlForPhotoVariant("blurred"),
     });
   if (blurredUploadError) {
     await adminClient.storage.from("photo-originals").remove([
