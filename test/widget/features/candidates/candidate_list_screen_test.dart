@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,6 +82,46 @@ void main() {
 
     verify(() => voteRepository.castVote(photoId: 'photo-1')).called(1);
   });
+
+  testWidgets(
+    'shows a loading indicator only on the tapped tile, and disables '
+    'the others',
+    (tester) async {
+      when(
+        () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+      ).thenAnswer(
+        (_) async => const [
+          CandidatePhotoRow(
+            id: 'photo-1',
+            blurredUrl: '',
+            voteCount: 0,
+            votedByMe: false,
+          ),
+          CandidatePhotoRow(
+            id: 'photo-2',
+            blurredUrl: '',
+            voteCount: 0,
+            votedByMe: false,
+          ),
+        ],
+      );
+      when(
+        () => voteRepository.castVote(photoId: 'photo-1'),
+      ).thenAnswer((_) => Completer<void>().future);
+
+      await pumpScreen(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(InkWell).first);
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      final tiles = tester.widgetList<InkWell>(find.byType(InkWell)).toList();
+      expect(tiles[0].onTap, isNull);
+      expect(tiles[1].onTap, isNull);
+    },
+  );
 
   testWidgets('shows a snackbar when casting a vote fails', (tester) async {
     when(

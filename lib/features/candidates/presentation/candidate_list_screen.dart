@@ -20,14 +20,42 @@ class CandidateListArgs {
 /// 確認できる(仕様書 3.5 / 4.1 S07参照)。候補写真をタップすると
 /// その場でその写真に投票する(再投票可、最後の一票のみ有効)。
 /// 候補写真の拡大表示(S08、#23)は別issueで対応する。
-class CandidateListScreen extends ConsumerWidget {
+class CandidateListScreen extends ConsumerStatefulWidget {
   const CandidateListScreen({required this.groupId, super.key});
 
   final String groupId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final candidatesAsync = ref.watch(todayCandidatesProvider(groupId));
+  ConsumerState<CandidateListScreen> createState() =>
+      _CandidateListScreenState();
+}
+
+class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
+  // 投票中はタップ元のタイルにだけローディング表示を出すために、対象の
+  // photoIdを保持する(全タイル共通のローディングフラグだけだと、
+  // どの写真に投票しようとしたのか分からなくなるため)。
+  String? _votingPhotoId;
+
+  Future<void> _vote(String photoId) async {
+    setState(() => _votingPhotoId = photoId);
+    try {
+      await ref
+          .read(castVoteControllerProvider.notifier)
+          .submit(groupId: widget.groupId, photoId: photoId);
+    } finally {
+      if (mounted) {
+        setState(() => _votingPhotoId = null);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final candidatesAsync = ref.watch(todayCandidatesProvider(widget.groupId));
+    // 連打による二重投票を防ぐため、投票中は全タイルを操作不可にする
+    // (cast_voteはUPSERTで冪等だが、どのタップがどの結果に対応するか
+    // 分かりにくくなるのを避ける)。どのタイルがタップされたかは
+    // _votingPhotoIdで区別し、そのタイルにのみローディング表示を出す。
     final isVoting = ref.watch(
       castVoteControllerProvider.select((state) => state.isLoading),
     );
@@ -64,9 +92,8 @@ class CandidateListScreen extends ConsumerWidget {
                 return _CandidateTile(
                   candidate: candidate,
                   enabled: !isVoting,
-                  onTap: () => ref
-                      .read(castVoteControllerProvider.notifier)
-                      .submit(groupId: groupId, photoId: candidate.id),
+                  isVoting: _votingPhotoId == candidate.id,
+                  onTap: () => _vote(candidate.id),
                 );
               },
             );
@@ -92,11 +119,13 @@ class _CandidateTile extends StatelessWidget {
   const _CandidateTile({
     required this.candidate,
     required this.enabled,
+    required this.isVoting,
     required this.onTap,
   });
 
   final CandidatePhotoRow candidate;
   final bool enabled;
+  final bool isVoting;
   final VoidCallback onTap;
 
   @override
@@ -168,6 +197,13 @@ class _CandidateTile extends StatelessWidget {
                 child: Icon(
                   Icons.check_circle,
                   color: colorScheme.primary,
+                ),
+              ),
+            if (isVoting)
+              const ColoredBox(
+                color: Colors.black38,
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.white),
                 ),
               ),
           ],

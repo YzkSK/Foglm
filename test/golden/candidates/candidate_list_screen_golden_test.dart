@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:alchemist/alchemist.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/candidates/data/candidate_repository.dart';
 import 'package:foglm/features/candidates/data/vote_repository.dart';
@@ -14,13 +15,18 @@ class _MockCandidateRepository extends Mock implements CandidateRepository {}
 
 class _MockVoteRepository extends Mock implements VoteRepository {}
 
-Widget _pumpApp({CandidateRepository? candidateRepository}) {
+Widget _pumpApp({
+  CandidateRepository? candidateRepository,
+  VoteRepository? voteRepository,
+}) {
   return ProviderScope(
     overrides: [
       candidateRepositoryProvider.overrideWithValue(
         candidateRepository ?? _MockCandidateRepository(),
       ),
-      voteRepositoryProvider.overrideWithValue(_MockVoteRepository()),
+      voteRepositoryProvider.overrideWithValue(
+        voteRepository ?? _MockVoteRepository(),
+      ),
     ],
     child: const MaterialApp(
       home: CandidateListScreen(groupId: 'test-group-id'),
@@ -104,6 +110,50 @@ void main() {
           ],
         );
         return _pumpApp(candidateRepository: repository);
+      },
+    ),
+  );
+
+  unawaited(
+    goldenTest(
+      'CandidateListScreen shows a loading overlay only on the tapped tile',
+      fileName: 'candidate_list_screen_voting',
+      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(InkWell).first);
+        await tester.pump();
+      },
+      builder: () {
+        final candidateRepository = _MockCandidateRepository();
+        when(
+          () => candidateRepository.getTodayCandidates(
+            groupId: 'test-group-id',
+          ),
+        ).thenAnswer(
+          (_) async => const [
+            CandidatePhotoRow(
+              id: 'photo-1',
+              blurredUrl: '',
+              voteCount: 0,
+              votedByMe: false,
+            ),
+            CandidatePhotoRow(
+              id: 'photo-2',
+              blurredUrl: '',
+              voteCount: 0,
+              votedByMe: false,
+            ),
+          ],
+        );
+        final voteRepository = _MockVoteRepository();
+        when(
+          () => voteRepository.castVote(photoId: 'photo-1'),
+        ).thenAnswer((_) => Completer<void>().future);
+        return _pumpApp(
+          candidateRepository: candidateRepository,
+          voteRepository: voteRepository,
+        );
       },
     ),
   );
