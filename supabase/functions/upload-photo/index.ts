@@ -1,6 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import sharp from "npm:sharp@0.33.5";
-import { isValidIsoDateTime, isValidUuid } from "../_shared/validation.ts";
+import { isValidUuid } from "../_shared/validation.ts";
 import { jsonResponse } from "../_shared/http.ts";
 import {
   buildStoragePath,
@@ -23,14 +23,10 @@ Deno.serve(async (req: Request) => {
   }
 
   const groupId = form.get("group_id");
-  const takenAt = form.get("taken_at");
   const file = form.get("file");
 
   if (typeof groupId !== "string" || !isValidUuid(groupId)) {
     return jsonResponse(400, { error: "invalid_group_id" });
-  }
-  if (typeof takenAt !== "string" || !isValidIsoDateTime(takenAt)) {
-    return jsonResponse(400, { error: "invalid_taken_at" });
   }
   if (!(file instanceof File) || !isSupportedImageType(file.type)) {
     return jsonResponse(400, { error: "unsupported_image_type" });
@@ -96,6 +92,9 @@ Deno.serve(async (req: Request) => {
   }
 
   const photoId = crypto.randomUUID();
+  // taken_atはクライアント値を信用せず、受信時のサーバー時刻を用いる
+  // (レビュー指摘: taken_atを詐称すると1日上限判定を回避できてしまうため)。
+  const takenAt = new Date().toISOString();
   const takenDate = takenDateInAsiaTokyo(takenAt);
   const originalPath = buildStoragePath(
     groupId,

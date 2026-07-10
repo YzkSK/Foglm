@@ -13,8 +13,3 @@ export function isValidPassword(password: string): boolean {
 export function isValidUuid(value: string): boolean {
   return UUID_PATTERN.test(value);
 }
-
-export function isValidIsoDateTime(value: string): boolean {
-  if (value.trim() === "") return false;
-  return !Number.isNaN(new Date(value).getTime());
-}
