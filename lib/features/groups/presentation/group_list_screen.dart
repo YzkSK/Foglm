@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/groups/application/join_group_controller.dart';
 import 'package:foglm/features/groups/data/my_groups_provider.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
@@ -72,7 +73,10 @@ class _GroupListBody extends StatelessWidget {
               leading: const Icon(Icons.person),
               title: const Text('自分'),
               subtitle: const Text('ソロモード'),
-              onTap: () => context.go('/camera'),
+              onTap: () => context.go(
+                '/camera',
+                extra: CameraArgs(groupId: soloGroup.id),
+              ),
             ),
           ),
         const SizedBox(height: 8),
@@ -87,7 +91,10 @@ class _GroupListBody extends StatelessWidget {
               child: ListTile(
                 title: Text(group.name),
                 subtitle: Text(_groupSubtitle(group)),
-                onTap: () => context.go('/camera'),
+                onTap: () => context.go(
+                  '/camera',
+                  extra: CameraArgs(groupId: group.id),
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -17,10 +17,6 @@ class DebugMenuScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ElevatedButton(
-              onPressed: () => context.go('/camera'),
-              child: const Text('カメラ'),
-            ),
-            ElevatedButton(
               onPressed: () => context.go('/profile'),
               child: const Text('プロフィール編集'),
             ),
