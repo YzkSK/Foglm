@@ -7,8 +7,7 @@ import 'package:go_router/go_router.dart';
 /// グループ作成画面(S04)。
 ///
 /// 固定グループ名を入力して作成する(仕様書 3.2 / 4.1 S04)。
-/// グループ一覧画面(S03、#36)が未実装のため、作成成功後は暫定的に
-/// カメラ画面('/camera')へ遷移する。
+/// 作成成功後はグループ一覧画面(S03)へ戻る。
 class CreateGroupScreen extends ConsumerStatefulWidget {
   const CreateGroupScreen({super.key});
 
@@ -47,7 +46,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('グループを作成しました')));
-      context.go('/camera');
+      context.go('/groups');
     }
   }
 

@@ -21,9 +21,9 @@ void main() {
       initialLocation: '/groups/new-event',
       routes: [
         GoRoute(
-          path: '/camera',
+          path: '/groups',
           builder: (context, state) =>
-              const Scaffold(body: Text('カメラ画面プレースホルダー')),
+              const Scaffold(body: Text('グループ一覧画面プレースホルダー')),
         ),
         GoRoute(
           path: '/groups/new-event',
@@ -94,7 +94,9 @@ void main() {
     );
   });
 
-  testWidgets('navigates to the camera screen on success', (tester) async {
+  testWidgets('navigates to the group list screen on success', (
+    tester,
+  ) async {
     when(
       () => repository.createEventGroup(
         name: 'My Trip',
@@ -110,7 +112,7 @@ void main() {
     await tester.tap(find.text('作成する'));
     await tester.pumpAndSettle();
 
-    expect(find.text('カメラ画面プレースホルダー'), findsOneWidget);
+    expect(find.text('グループ一覧画面プレースホルダー'), findsOneWidget);
   });
 
   testWidgets('shows an error message when the repository fails', (
