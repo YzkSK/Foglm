@@ -35,6 +35,8 @@ abstract class AuthRepository {
     required String displayName,
     String? avatarUrl,
   });
+
+  Future<void> deleteAccount();
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -152,6 +154,16 @@ class SupabaseAuthRepository implements AuthRepository {
       'update_profile',
       params: {'p_display_name': displayName, 'p_avatar_url': avatarUrl},
     );
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    // delete-account Edge Function側でも本人のセッションをsignOutしているが、
+    // それはサーバー側のセッション(リフレッシュトークン)を無効化するのみで、
+    // このFlutterアプリが保持するローカルのセッションキャッシュはクリアされない
+    // ため、ここでも明示的にsignOutしてアプリ側の状態を即座に更新する。
+    await _client.functions.invoke('delete-account');
+    await _client.auth.signOut();
   }
 }
 
