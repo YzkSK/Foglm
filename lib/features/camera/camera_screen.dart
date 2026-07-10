@@ -33,6 +33,10 @@ class CameraScreen extends ConsumerStatefulWidget {
 class _CameraScreenState extends ConsumerState<CameraScreen> {
   CameraController? _controller;
   late final Future<void> _initializeControllerFuture;
+  // takePicture()完了からuploadPhotoControllerProviderがローディング状態に
+  // 遷移するまでの間はシャッターボタンがまだ操作可能なため、連打による
+  // 二重撮影・二重送信を防ぐガードとして使う。
+  bool _isCapturing = false;
 
   @override
   void initState() {
@@ -64,46 +68,55 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   Future<void> _onShutterPressed() async {
     final controller = _controller;
-    if (controller == null) {
+    if (controller == null || _isCapturing) {
       return;
     }
+    setState(() => _isCapturing = true);
 
-    final XFile file;
     try {
-      file = await controller.takePicture();
-    } on CameraException {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('撮影に失敗しました')));
+      final XFile file;
+      try {
+        file = await controller.takePicture();
+      } on CameraException {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('撮影に失敗しました')));
+        }
+        return;
       }
-      return;
-    }
 
-    final bytes = await file.readAsBytes();
-    if (!mounted) {
-      return;
-    }
+      final bytes = await file.readAsBytes();
+      if (!mounted) {
+        return;
+      }
 
-    await ref
-        .read(uploadPhotoControllerProvider.notifier)
-        .submit(groupId: widget.groupId, bytes: bytes);
+      await ref
+          .read(uploadPhotoControllerProvider.notifier)
+          .submit(groupId: widget.groupId, bytes: bytes);
 
-    if (!mounted) {
-      return;
-    }
-    final state = ref.read(uploadPhotoControllerProvider);
-    if (!state.hasError) {
-      ref.read(remainingShotsProvider.notifier).decrement();
+      if (!mounted) {
+        return;
+      }
+      final state = ref.read(uploadPhotoControllerProvider);
+      if (!state.hasError) {
+        ref.read(remainingShotsProvider.notifier).decrement();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final remaining = ref.watch(remainingShotsProvider);
-    final isUploading = ref.watch(
-      uploadPhotoControllerProvider.select((state) => state.isLoading),
-    );
+    final isUploading =
+        _isCapturing ||
+        ref.watch(
+          uploadPhotoControllerProvider.select((state) => state.isLoading),
+        );
 
     ref.listen<AsyncValue<void>>(uploadPhotoControllerProvider, (
       previous,
