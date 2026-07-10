@@ -4,6 +4,11 @@ const SUPPORTED_IMAGE_TYPES: Record<string, string> = {
   "image/webp": "webp",
 };
 
+export type PhotoVariant = "original" | "blurred";
+
+const ORIGINAL_CACHE_CONTROL_SECONDS = "30";
+const BLURRED_CACHE_CONTROL_SECONDS = "31536000";
+
 export function isSupportedImageType(contentType: string): boolean {
   return contentType in SUPPORTED_IMAGE_TYPES;
 }
@@ -19,6 +24,13 @@ export function buildStoragePath(
   ext: string,
 ): string {
   return `${groupId}/${takenDate}/${photoId}.${ext}`;
+}
+
+export function cacheControlForPhotoVariant(variant: PhotoVariant): string {
+  if (variant === "original") {
+    return ORIGINAL_CACHE_CONTROL_SECONDS;
+  }
+  return BLURRED_CACHE_CONTROL_SECONDS;
 }
 
 export interface PhotoInsertErrorMapping {
