@@ -128,10 +128,20 @@ class _CandidateTile extends StatelessWidget {
               Image.network(
                 candidate.blurredUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const ColoredBox(
-                  color: Colors.black12,
-                  child: Icon(Icons.broken_image_outlined),
-                ),
+                errorBuilder: (context, error, stackTrace) {
+                  // 画像読み込み失敗を握り潰さず記録する。
+                  developer.log(
+                    'failed to load candidate image for photo '
+                    '${candidate.id}',
+                    name: 'CandidateListScreen',
+                    error: error,
+                    stackTrace: stackTrace,
+                  );
+                  return const ColoredBox(
+                    color: Colors.black12,
+                    child: Icon(Icons.broken_image_outlined),
+                  );
+                },
               ),
             Positioned(
               right: 4,
