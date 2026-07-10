@@ -19,6 +19,8 @@ abstract class GroupRepository {
   Future<List<MyGroupRow>> getMyGroups();
 
   Future<void> joinGroupByCode({required String code});
+
+  Future<void> leaveGroup({required String groupId});
 }
 
 class SupabaseGroupRepository implements GroupRepository {
@@ -76,6 +78,14 @@ class SupabaseGroupRepository implements GroupRepository {
         error: error,
         stackTrace: stackTrace,
       ),
+    );
+  }
+
+  @override
+  Future<void> leaveGroup({required String groupId}) async {
+    await _client.rpc<void>(
+      'leave_group',
+      params: {'p_group_id': groupId},
     );
   }
 }
