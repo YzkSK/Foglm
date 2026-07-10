@@ -25,6 +25,10 @@ class DebugMenuScreen extends StatelessWidget {
               child: const Text('プロフィール編集'),
             ),
             ElevatedButton(
+              onPressed: () => context.go('/settings'),
+              child: const Text('設定・マイページ'),
+            ),
+            ElevatedButton(
               onPressed: () => context.go('/groups'),
               child: const Text('グループ一覧'),
             ),
@@ -47,6 +51,10 @@ class DebugMenuScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () => context.go('/reset-password'),
               child: const Text('新パスワード設定'),
+            ),
+            ElevatedButton(
+              onPressed: () => context.push('/account/delete'),
+              child: const Text('アカウント削除'),
             ),
           ],
         ),
