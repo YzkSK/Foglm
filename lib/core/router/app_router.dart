@@ -14,6 +14,7 @@ import 'package:foglm/features/auth/presentation/settings_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 
 import 'package:foglm/features/camera/camera_screen.dart';
+import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
 import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';
 import 'package:foglm/features/groups/presentation/create_group_screen.dart';
@@ -103,6 +104,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final args = state.extra as CameraArgs?;
           return CameraScreen(groupId: args?.groupId ?? '');
+        },
+      ),
+
+      GoRoute(
+        path: '/candidates',
+        builder: (context, state) {
+          final args = state.extra as CandidateListArgs?;
+          return CandidateListScreen(groupId: args?.groupId ?? '');
         },
       ),
 
