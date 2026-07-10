@@ -17,6 +17,8 @@ declare
   v_daily_vote record;
   v_winner_photo_id uuid;
 begin
+  -- current_dateはDBセッションのタイムゾーン(UTC)基準。UTC15:00起動時点ではcurrent_dateは
+  -- まだ日本時間の締切対象日と一致しているため、この比較が成立する(DBセッションがUTCである前提)。
   for v_daily_vote in
     select * from public.daily_votes
     where status = 'open'
