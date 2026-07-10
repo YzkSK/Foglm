@@ -101,11 +101,26 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Start local Supabase
+        working-directory: .
+        run: npx supabase start
+
+      - name: Export local Supabase credentials
+        working-directory: .
+        run: |
+          API_URL=$(npx supabase status -o json | jq -r '.API_URL')
+          SERVICE_ROLE_KEY=$(npx supabase status -o json | jq -r '.SERVICE_ROLE_KEY')
+          echo "SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+
       - name: Check formatting
         run: deno fmt --check .
 
       - name: Lint
         run: deno lint .
 
-      - name: Run tests
-        run: deno test --allow-net .
+      - name: Run unit tests
+        run: deno test --allow-net --ignore="**/*.integration.test.ts" .
+
+      - name: Run integration tests
+        run: deno test --allow-net --allow-env "**/*.integration.test.ts"
