@@ -41,7 +41,7 @@ void main() {
       builder: () {
         final repository = _MockAuthRepository();
         when(
-          () => repository.deleteAccount(),
+          repository.deleteAccount,
         ).thenAnswer((_) => Completer<void>().future);
         return _pumpApp(repository);
       },
@@ -60,9 +60,7 @@ void main() {
       },
       builder: () {
         final repository = _MockAuthRepository();
-        when(
-          () => repository.deleteAccount(),
-        ).thenThrow(Exception('unexpected'));
+        when(repository.deleteAccount).thenThrow(Exception('unexpected'));
         return _pumpApp(repository);
       },
     ),
