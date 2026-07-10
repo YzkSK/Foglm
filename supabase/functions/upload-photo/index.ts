@@ -14,8 +14,8 @@ import {
 const BLURRED_WIDTH = 32;
 const BLURRED_BLUR_SIGMA = 12;
 
-// 写真の保存パスはUUIDベースで不変(同一パスへの再アップロードは発生しない)ため、
-// CDN・ブラウザともに長期キャッシュしてよい(仕様書 8.2参照)。
+// ボヤけ版の保存パスはUUIDベースで不変(同一パスへの再アップロードは発生しない)上、
+// 機微データではないため、CDN・ブラウザともに長期キャッシュしてよい(仕様書 8.2参照)。
 const IMMUTABLE_CACHE_CONTROL_SECONDS = "31536000";
 
 Deno.serve(async (req: Request) => {
@@ -113,11 +113,13 @@ Deno.serve(async (req: Request) => {
   // (authenticatedロール向けのINSERTポリシーが存在しないため。仕様書 8.1参照)。
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
+  // 原本は現像後に署名付きURL経由でのみ配信される非公開データ(仕様書 8.1参照)。
+  // 長期キャッシュを設定すると、CDNが署名トークンをキャッシュキーに含めない場合に
+  // 非署名アクセスへ晒される恐れがあるため、原本には長期cacheControlを設定しない。
   const { error: originalUploadError } = await adminClient.storage
     .from("photo-originals")
     .upload(originalPath, originalBytes, {
       contentType: file.type,
-      cacheControl: IMMUTABLE_CACHE_CONTROL_SECONDS,
     });
   if (originalUploadError) {
     return jsonResponse(500, { error: "upload_failed" });
