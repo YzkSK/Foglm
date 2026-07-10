@@ -2,6 +2,8 @@
 // 単一メソッドでもクラスとして定義する。
 // ignore_for_file: one_member_abstracts
 
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
 import 'package:foglm/core/utils/date_formatting.dart';
@@ -85,10 +87,21 @@ class SupabaseCandidateRepository implements CandidateRepository {
           photos.map((photo) => photo.blurredStoragePath).toList(),
           _blurredUrlExpiresInSeconds,
         );
-    final blurredUrlsByPath = {
-      for (final result in signedUrlResults)
-        if (result is SignedUrlSuccess) result.path: result.signedUrl,
-    };
+    final blurredUrlsByPath = <String, String>{};
+    for (final result in signedUrlResults) {
+      switch (result) {
+        case SignedUrlSuccess(:final path, :final signedUrl):
+          blurredUrlsByPath[path] = signedUrl;
+        case SignedUrlFailure(:final path, :final error):
+          // 署名付きURLの発行に失敗した写真は、握り潰さずログに残した上で
+          // (buildCandidateRows内で)blurredUrlを空文字にフォールバックする。
+          developer.log(
+            'failed to create a signed URL for $path',
+            name: 'SupabaseCandidateRepository',
+            error: error,
+          );
+      }
+    }
 
     return buildCandidateRows(
       photos: photos,
