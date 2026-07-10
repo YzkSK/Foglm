@@ -110,7 +110,10 @@ Deno.serve(async (req: Request) => {
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   // 原本は現像後に署名付きURL経由でのみ配信される非公開データ(仕様書 8.1参照)。
-  // 現像直後の集中アクセスは短いCDN TTLで吸収し、署名URL期限後の残留配信は抑える。
+  // 長期キャッシュを設定すると、CDNが署名トークンをキャッシュキーに含めない場合に
+  // 非署名アクセスへ晒される恐れがある(issue #166参照)。そのため、get-photo-urlが
+  // 署名URLを再発行するまでのバッファ秒数(CACHE_REFRESH_BUFFER_SECONDS)と揃えた
+  // 短いCDN TTLのみを設定し、現像直後の集中アクセスを吸収しつつ残留配信は抑える。
   const { error: originalUploadError } = await adminClient.storage
     .from("photo-originals")
     .upload(originalPath, originalBytes, {
