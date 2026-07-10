@@ -4,6 +4,7 @@ import 'package:foglm/core/config/env.dart';
 import 'package:foglm/core/router/auth_guard.dart';
 import 'package:foglm/features/auth/data/auth_state_listener.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/auth/presentation/delete_account_confirm_screen.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:foglm/features/auth/presentation/login_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
@@ -16,6 +17,8 @@ import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';
 import 'package:foglm/features/groups/presentation/create_group_screen.dart';
 import 'package:foglm/features/groups/presentation/group_list_screen.dart';
+import 'package:foglm/features/groups/presentation/invite_screen.dart';
+import 'package:foglm/features/groups/presentation/leave_group_confirm_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// `currentPublicUserProvider`の値が変わるたび(ローディング→取得完了を含む)に
@@ -110,6 +113,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
+        path: '/account/delete',
+        builder: (context, state) => const DeleteAccountConfirmScreen(),
+      ),
+
+      GoRoute(
         path: '/groups/new',
         builder: (context, state) => const CreateGroupScreen(),
       ),
@@ -117,6 +125,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/groups/new-event',
         builder: (context, state) => const CreateEventGroupScreen(),
+      ),
+
+      GoRoute(
+        path: '/groups/leave',
+        builder: (context, state) {
+          final args = state.extra as LeaveGroupArgs?;
+          return LeaveGroupConfirmScreen(
+            groupId: args?.groupId ?? '',
+            groupName: args?.groupName ?? '',
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/groups/invite',
+        builder: (context, state) {
+          final args = state.extra as InviteArgs?;
+          return InviteScreen(
+            groupId: args?.groupId ?? '',
+            groupName: args?.groupName ?? '',
+          );
+        },
       ),
 
       if (Env.isDevProfile)
