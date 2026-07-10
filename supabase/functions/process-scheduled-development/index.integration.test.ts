@@ -144,7 +144,8 @@ Deno.test("processScheduledDevelopment develops due photos and aggregates by gro
       "2025-01-01T00:00:00.000Z",
     );
 
-    const result = await processScheduledDevelopment(supabase);
+    const executionTime = "2026-01-10T12:00:00.000Z";
+    const result = await processScheduledDevelopment(supabase, executionTime);
 
     const countsByGroup = new Map(
       result.developedGroupCounts.map((entry) => [entry.groupId, entry.developedCount]),
@@ -157,7 +158,7 @@ Deno.test("processScheduledDevelopment develops due photos and aggregates by gro
       p1,
     ).single();
     assertEquals(photo1?.status, "developed");
-    if (photo1?.developed_at === null) throw new Error("photo1.developed_at should be set");
+    assertEquals(photo1?.developed_at, "2026-01-10T12:00:00+00:00");
 
     const { data: photo2 } = await supabase.from("photos").select("status").eq("id", p2).single();
     assertEquals(photo2?.status, "developed");

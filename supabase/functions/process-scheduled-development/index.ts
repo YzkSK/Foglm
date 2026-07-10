@@ -35,7 +35,7 @@ function notifyDevelopment(_groupId: string, _developedCount: number): void {
 /**
  * status='waiting_random'かつdevelop_scheduled_at <= nowの写真を全件developedへ更新し、
  * group_id単位で件数を集計する(仕様書3.6/6.5参照)。
- * nowを省略した場合はDB側の現在時刻(now())を使う。テストからは固定日時を注入できる
+ * nowを省略した場合はEdge Function側の現在時刻を使う。テストからは固定日時を注入できる
  * (docs/testing-policy.mdの「締切集計は時刻を引数として注入可能にする」方針に従う)。
  */
 export async function processScheduledDevelopment(
@@ -44,7 +44,7 @@ export async function processScheduledDevelopment(
 ): Promise<ProcessScheduledDevelopmentResult> {
   const { data: updatedPhotos, error: updateError } = await supabase
     .from("photos")
-    .update({ status: "developed", developed_at: new Date().toISOString() })
+    .update({ status: "developed", developed_at: now })
     .eq("status", "waiting_random")
     .lte("develop_scheduled_at", now)
     .select("group_id");
