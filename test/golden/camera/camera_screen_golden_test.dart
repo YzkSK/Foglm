@@ -101,8 +101,8 @@ void main() {
           overrides: [
             photoRepositoryProvider.overrideWithValue(repository),
             remainingShotsRepositoryProvider.overrideWithValue(
-            _buildRemainingShotsRepository(),
-          ),
+              _buildRemainingShotsRepository(),
+            ),
           ],
           child: const MaterialApp(
             home: CameraScreen(groupId: 'test-group-id'),

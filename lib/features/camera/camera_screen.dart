@@ -112,9 +112,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final remainingAsync = ref.watch(remainingShotsProvider(widget.groupId));
     // 取得中・取得失敗の間はまだ実際の残数が分からないため、上限超過を
     // 防ぐ安全側の挙動としてシャッターを操作不可にする(仕様書 5.2.3参照)。
-    final remaining = _limitReachedOverride
-        ? 0
-        : (remainingAsync.value ?? 0);
+    final remaining = _limitReachedOverride ? 0 : (remainingAsync.value ?? 0);
     final isUploading =
         _isCapturing ||
         ref.watch(
