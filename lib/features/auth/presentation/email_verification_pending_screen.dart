@@ -5,6 +5,7 @@ import 'package:foglm/core/widgets/form_status_text.dart';
 import 'package:foglm/features/auth/application/sign_out_controller.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/auth/widgets/logout_button.dart';
 import 'package:go_router/go_router.dart';
 
 /// `/verify-pending`ルートの`extra`として渡す引数。
@@ -22,8 +23,9 @@ class VerifyPendingArgs {
 ///
 /// サインアップ直後に表示され、確認メールのリンクを踏むまでの案内・
 /// 確認メール再送導線を提供する(仕様書 3.1 / 4.1 S01c / 6.1 verify_email)。
-/// 確認完了後はプロフィール初期設定画面(S02、#5)へ遷移する想定だが、
-/// そちらが未実装のためログイン画面('/')へ遷移するに留める。
+/// 確認完了後は`context.go('/')`するが、プロフィール初期設定未完了なら
+/// ルーターの`profileSetupRedirect`によりプロフィール初期設定画面(S02)へ
+/// 自動的にリダイレクトされる。
 ///
 /// 未確認ユーザーは`emailVerificationRedirect`により設定・マイページ画面(S12)へ
 /// 到達できないため、S12のログアウト導線が使えない。仕様書3.1.1の
@@ -155,7 +157,7 @@ class _EmailVerificationPendingScreenState
                   child: const Text('サインアップ画面へ'),
                 ),
                 const SizedBox(height: 8),
-                _LogoutButton(isBusy: isSigningOut),
+                LogoutButton(isBusy: isSigningOut),
               ],
             ),
           ),
@@ -195,35 +197,11 @@ class _EmailVerificationPendingScreenState
                     : const Text('確認した'),
               ),
               const SizedBox(height: 8),
-              _LogoutButton(isBusy: isBusy),
+              LogoutButton(isBusy: isBusy),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-/// メール未確認ユーザーは設定・マイページ画面(S12)に到達できないため、
-/// 本画面がログアウトの唯一の導線になる(仕様書 3.1.1参照)。
-class _LogoutButton extends ConsumerWidget {
-  const _LogoutButton({required this.isBusy});
-
-  final bool isBusy;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return OutlinedButton(
-      onPressed: isBusy
-          ? null
-          : () => ref.read(signOutControllerProvider.notifier).signOut(),
-      child: isBusy
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Text('ログアウト'),
     );
   }
 }
