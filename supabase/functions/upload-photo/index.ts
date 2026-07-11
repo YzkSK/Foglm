@@ -1,10 +1,10 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import sharp from "npm:sharp@0.33.5";
 import { isValidUuid } from "../_shared/validation.ts";
 import { jsonResponse } from "../_shared/http.ts";
 import {
   buildStoragePath,
   cacheControlForPhotoVariant,
+  createBlurredJpeg,
   extensionForImageType,
   isSupportedImageType,
   mapPhotoInsertError,
@@ -83,11 +83,12 @@ Deno.serve(async (req: Request) => {
 
   let blurredBytes: Uint8Array;
   try {
-    blurredBytes = await sharp(originalBytes)
-      .resize({ width: BLURRED_WIDTH })
-      .blur(BLURRED_BLUR_SIGMA)
-      .jpeg({ quality: 60 })
-      .toBuffer();
+    blurredBytes = await createBlurredJpeg(
+      originalBytes,
+      BLURRED_WIDTH,
+      BLURRED_BLUR_SIGMA,
+      60,
+    );
   } catch {
     return jsonResponse(400, { error: "invalid_image" });
   }
