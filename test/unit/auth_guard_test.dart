@@ -115,6 +115,32 @@ void main() {
         expect(result, '/profile/setup');
       },
     );
+
+    test(
+      'does not redirect an incomplete-profile user on the password reset '
+      'request path',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(
+          user: user,
+          location: '/password-reset',
+        );
+        expect(result, isNull);
+      },
+    );
+
+    test(
+      'does not redirect an incomplete-profile user on the reset password '
+      'path (from the email link)',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(
+          user: user,
+          location: '/reset-password',
+        );
+        expect(result, isNull);
+      },
+    );
   });
 
   group('authRequiredRedirect', () {

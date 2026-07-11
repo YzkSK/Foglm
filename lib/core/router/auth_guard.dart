@@ -31,6 +31,8 @@ const allowedWhenUnauthenticatedPaths = {
 const allowedWhenProfileIncompletePaths = {
   '/signup',
   '/verify-pending',
+  '/password-reset',
+  '/reset-password',
   '/profile/setup',
   '/debug',
 };
