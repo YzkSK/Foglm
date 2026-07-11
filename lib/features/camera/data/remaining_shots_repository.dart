@@ -29,12 +29,21 @@ class SupabaseRemainingShotsRepository implements RemainingShotsRepository {
     RealtimeChannel? channel;
 
     Future<void> fetchAndEmit() async {
-      final remaining = await _client.rpc<int>(
-        'get_today_shots_remaining',
-        params: {'p_group_id': groupId},
-      );
-      if (!controller.isClosed) {
-        controller.add(remaining);
+      try {
+        final remaining = await _client.rpc<int>(
+          'get_today_shots_remaining',
+          params: {'p_group_id': groupId},
+        );
+        if (!controller.isClosed) {
+          controller.add(remaining);
+        }
+      } on Object catch (error, stackTrace) {
+        // RPCの例外を握り潰さず、ストリームのエラーとして呼び出し元に伝える
+        // (ここで捕まえないとunawaited()の中で未処理のZone例外として消え、
+        // ストリームが更新を止めたまま無言でフリーズしてしまう)。
+        if (!controller.isClosed) {
+          controller.addError(error, stackTrace);
+        }
       }
     }
 
@@ -61,6 +70,9 @@ class SupabaseRemainingShotsRepository implements RemainingShotsRepository {
         if (subscribedChannel != null) {
           await _client.removeChannel(subscribedChannel);
         }
+        // close()後はfetchAndEmit()側のisClosedガードが効くため、購読解除後に
+        // 進行中だったRPCが遅れて完了してもcontroller.add/addErrorは無視される。
+        await controller.close();
       },
     );
 
