@@ -1,8 +1,18 @@
+import { CACHE_REFRESH_BUFFER_SECONDS } from "../_shared/photo-cache.ts";
+
 const SUPPORTED_IMAGE_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
+
+export type PhotoVariant = "original" | "blurred";
+
+// 原本のCDN TTLはget-photo-urlのCACHE_REFRESH_BUFFER_SECONDSと同じ値にする(issue #166参照)。
+// 署名付きURLはこのバッファ秒数を切ると再発行されるため、TTLをこれと揃えておけば
+// CDNキャッシュが署名の実効期限を超えて原本レスポンスを生かし続けることはない。
+const ORIGINAL_CACHE_CONTROL_SECONDS = String(CACHE_REFRESH_BUFFER_SECONDS);
+const BLURRED_CACHE_CONTROL_SECONDS = "31536000";
 
 export function isSupportedImageType(contentType: string): boolean {
   return contentType in SUPPORTED_IMAGE_TYPES;
@@ -19,6 +29,13 @@ export function buildStoragePath(
   ext: string,
 ): string {
   return `${groupId}/${takenDate}/${photoId}.${ext}`;
+}
+
+export function cacheControlForPhotoVariant(variant: PhotoVariant): string {
+  if (variant === "original") {
+    return ORIGINAL_CACHE_CONTROL_SECONDS;
+  }
+  return BLURRED_CACHE_CONTROL_SECONDS;
 }
 
 export interface PhotoInsertErrorMapping {
