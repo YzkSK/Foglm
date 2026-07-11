@@ -9,11 +9,25 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/camera/data/photo_repository.dart';
+import 'package:foglm/features/camera/data/remaining_shots_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../widget/features/camera/fake_camera_platform.dart';
 
 class _MockPhotoRepository extends Mock implements PhotoRepository {}
+
+class _MockRemainingShotsRepository extends Mock
+    implements RemainingShotsRepository {}
+
+_MockRemainingShotsRepository _buildRemainingShotsRepository() {
+  final repository = _MockRemainingShotsRepository();
+  when(
+    () => repository.watchTodayShotsRemaining(
+      groupId: any(named: 'groupId'),
+    ),
+  ).thenAnswer((_) => Stream.value(10));
+  return repository;
+}
 
 void main() {
   setUpAll(() {
@@ -29,8 +43,13 @@ void main() {
       // 無限アニメーションが絡むため、pumpAndSettleではなく固定回数
       // pumpする戦略を使う。
       pumpBeforeTest: pumpNTimes(10),
-      builder: () => const ProviderScope(
-        child: MaterialApp(home: CameraScreen(groupId: 'test-group-id')),
+      builder: () => ProviderScope(
+        overrides: [
+          remainingShotsRepositoryProvider.overrideWithValue(
+            _buildRemainingShotsRepository(),
+          ),
+        ],
+        child: const MaterialApp(home: CameraScreen(groupId: 'test-group-id')),
       ),
     ),
   );
@@ -50,6 +69,9 @@ void main() {
       builder: () => ProviderScope(
         overrides: [
           photoRepositoryProvider.overrideWithValue(_MockPhotoRepository()),
+          remainingShotsRepositoryProvider.overrideWithValue(
+            _buildRemainingShotsRepository(),
+          ),
         ],
         child: const MaterialApp(home: CameraScreen(groupId: 'test-group-id')),
       ),
@@ -76,7 +98,12 @@ void main() {
           ),
         ).thenAnswer((_) => Completer<void>().future);
         return ProviderScope(
-          overrides: [photoRepositoryProvider.overrideWithValue(repository)],
+          overrides: [
+            photoRepositoryProvider.overrideWithValue(repository),
+            remainingShotsRepositoryProvider.overrideWithValue(
+              _buildRemainingShotsRepository(),
+            ),
+          ],
           child: const MaterialApp(
             home: CameraScreen(groupId: 'test-group-id'),
           ),
