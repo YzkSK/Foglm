@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/album/presentation/album_screen.dart';
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/groups/application/join_group_controller.dart';
 import 'package:foglm/features/groups/data/my_groups_provider.dart';
@@ -77,6 +78,13 @@ class _GroupListBody extends StatelessWidget {
                 '/camera',
                 extra: CameraArgs(groupId: soloGroup.id),
               ),
+              trailing: TextButton(
+                onPressed: () => context.push(
+                  '/album',
+                  extra: AlbumArgs(groupId: soloGroup.id),
+                ),
+                child: const Text('アルバム'),
+              ),
             ),
           ),
         const SizedBox(height: 8),
@@ -98,6 +106,13 @@ class _GroupListBody extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    TextButton(
+                      onPressed: () => context.push(
+                        '/album',
+                        extra: AlbumArgs(groupId: group.id),
+                      ),
+                      child: const Text('アルバム'),
+                    ),
                     TextButton(
                       onPressed: () => context.push(
                         '/groups/invite',

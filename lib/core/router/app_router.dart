@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/config/env.dart';
 import 'package:foglm/core/router/auth_guard.dart';
+import 'package:foglm/features/album/presentation/album_screen.dart';
 import 'package:foglm/features/auth/data/auth_state_listener.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/delete_account_confirm_screen.dart';
@@ -112,6 +113,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final args = state.extra as CandidateListArgs?;
           return CandidateListScreen(groupId: args?.groupId ?? '');
+        },
+      ),
+
+      GoRoute(
+        path: '/album',
+        builder: (context, state) {
+          final args = state.extra as AlbumArgs?;
+          return AlbumScreen(groupId: args?.groupId ?? '');
         },
       ),
 
