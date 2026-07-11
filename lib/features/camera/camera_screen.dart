@@ -38,6 +38,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   // 遷移するまでの間はシャッターボタンがまだ操作可能なため、連打による
   // 二重撮影・二重送信を防ぐガードとして使う。
   bool _isCapturing = false;
+  // サーバーが上限超過(daily_limit_reached)を返した場合、Realtime経由の
+  // 反映(他メンバーの撮影がないと発火しない)を待たずに即座にシャッターを
+  // 操作不可にするためのローカルな上書きフラグ(仕様書 5.2.3参照)。
+  bool _limitReachedOverride = false;
 
   @override
   void initState() {
@@ -96,14 +100,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       await ref
           .read(uploadPhotoControllerProvider.notifier)
           .submit(groupId: widget.groupId, bytes: bytes);
-
-      if (!mounted) {
-        return;
-      }
-      final state = ref.read(uploadPhotoControllerProvider);
-      if (!state.hasError) {
-        ref.read(remainingShotsProvider.notifier).decrement();
-      }
     } finally {
       if (mounted) {
         setState(() => _isCapturing = false);
@@ -113,7 +109,12 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = ref.watch(remainingShotsProvider);
+    final remainingAsync = ref.watch(remainingShotsProvider(widget.groupId));
+    // 取得中・取得失敗の間はまだ実際の残数が分からないため、上限超過を
+    // 防ぐ安全側の挙動としてシャッターを操作不可にする(仕様書 5.2.3参照)。
+    final remaining = _limitReachedOverride
+        ? 0
+        : (remainingAsync.value ?? 0);
     final isUploading =
         _isCapturing ||
         ref.watch(
@@ -130,7 +131,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         return;
       }
       if (error is DailyLimitReachedFailure) {
-        ref.read(remainingShotsProvider.notifier).reachedLimit();
+        setState(() => _limitReachedOverride = true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('本日の撮影上限に達しました')),
         );

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/camera/data/photo_repository.dart';
+import 'package:foglm/features/camera/data/remaining_shots_repository.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -15,8 +16,12 @@ import 'fake_camera_platform.dart';
 
 class MockPhotoRepository extends Mock implements PhotoRepository {}
 
+class MockRemainingShotsRepository extends Mock
+    implements RemainingShotsRepository {}
+
 void main() {
   late MockPhotoRepository repository;
+  late MockRemainingShotsRepository remainingShotsRepository;
   late CameraPlatform originalPlatform;
 
   setUpAll(() {
@@ -25,6 +30,12 @@ void main() {
 
   setUp(() {
     repository = MockPhotoRepository();
+    remainingShotsRepository = MockRemainingShotsRepository();
+    when(
+      () => remainingShotsRepository.watchTodayShotsRemaining(
+        groupId: any(named: 'groupId'),
+      ),
+    ).thenAnswer((_) => Stream.value(10));
     originalPlatform = CameraPlatform.instance;
     CameraPlatform.instance = FakeCameraPlatform();
   });
@@ -35,13 +46,18 @@ void main() {
 
   Widget pumpApp() {
     return ProviderScope(
-      overrides: [photoRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        photoRepositoryProvider.overrideWithValue(repository),
+        remainingShotsRepositoryProvider.overrideWithValue(
+          remainingShotsRepository,
+        ),
+      ],
       child: const MaterialApp(home: CameraScreen(groupId: 'group-1')),
     );
   }
 
-  testWidgets('uploads the captured photo and decrements the remaining '
-      'count on success', (tester) async {
+  testWidgets('shows the remaining count reported by Realtime and uploads '
+      'the captured photo', (tester) async {
     when(
       () => repository.uploadPhoto(
         groupId: any(named: 'groupId'),
@@ -63,8 +79,34 @@ void main() {
         bytes: any(named: 'bytes'),
       ),
     ).called(1);
-    expect(find.text('残り 9 枚'), findsOneWidget);
+    // 残数の減少はupload成功そのものではなく、Realtime経由での
+    // get_today_shots_remaining再取得によって反映される(仕様書 5.2.3参照)。
+    expect(find.text('残り 10 枚'), findsOneWidget);
   });
+
+  testWidgets(
+    'reflects a Realtime update pushed after another member shoots',
+    (tester) async {
+      final controller = StreamController<int>();
+      addTearDown(controller.close);
+      when(
+        () => remainingShotsRepository.watchTodayShotsRemaining(
+          groupId: any(named: 'groupId'),
+        ),
+      ).thenAnswer((_) => controller.stream);
+
+      await tester.pumpWidget(pumpApp());
+      controller.add(10);
+      await tester.pumpAndSettle();
+
+      expect(find.text('残り 10 枚'), findsOneWidget);
+
+      controller.add(9);
+      await tester.pumpAndSettle();
+
+      expect(find.text('残り 9 枚'), findsOneWidget);
+    },
+  );
 
   testWidgets('shows a loading indicator while uploading', (tester) async {
     when(
