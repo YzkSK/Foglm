@@ -21,6 +21,22 @@ const allowedWhenUnauthenticatedPaths = {
   '/debug',
 };
 
+/// 初回プロフィール設定(S02)未完了のユーザーでも遷移を許可するパス。
+/// 撮影・投票・アルバム閲覧などの主要機能画面は今後の別issueで追加され次第、
+/// この一覧に含めない(=自動的にガード対象になる)想定。
+/// `'/'`は含めない: ログイン済みユーザーが`'/'`(ログイン画面)へ着地した際に
+/// プロフィール設定画面へ自動的にリダイレクトさせるため
+/// (`allowedWhenUnverifiedPaths`と異なり、こちらは新規追加のガードなので
+/// この動作を最初から正しくする)。
+const allowedWhenProfileIncompletePaths = {
+  '/signup',
+  '/verify-pending',
+  '/password-reset',
+  '/reset-password',
+  '/profile/setup',
+  '/debug',
+};
+
 /// 未ログイン(または`public.users`に対応する行が存在しない)ユーザーが
 /// 許可リスト外の画面へ遷移しようとした場合、ログイン画面('/')へリダイレクトする
 /// (仕様書 3.1.1 / 6.1 sign_out参照)。
@@ -57,4 +73,20 @@ String? emailVerificationRedirect({
     return null;
   }
   return '/verify-pending';
+}
+
+/// 初回プロフィール設定(S02)未完了ユーザーの機能制限(仕様書 3.1 / 4.2参照)。
+/// `profile_completed_at`が未設定のユーザーが許可リスト外の画面へ遷移しようと
+/// した場合、プロフィール初期設定画面へリダイレクトする。
+String? profileSetupRedirect({
+  required PublicUserRow? user,
+  required String location,
+}) {
+  if (user == null || user.profileCompletedAt != null) {
+    return null;
+  }
+  if (allowedWhenProfileIncompletePaths.contains(location)) {
+    return null;
+  }
+  return '/profile/setup';
 }

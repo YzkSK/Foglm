@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/auth/data/auth_repository.dart';
+import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/data/my_profile_provider.dart';
 import 'package:foglm/features/auth/domain/my_profile.dart';
+import 'package:foglm/features/auth/domain/public_user.dart';
 import 'package:foglm/features/auth/presentation/profile_edit_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -26,6 +28,13 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(repository),
           myProfileProvider.overrideWith((ref) async => profile),
+          // update_profile成功後、UpdateProfileController.submit()が
+          // currentPublicUserProviderを再取得するため、未overrideだと
+          // (実クライアント未初期化により)常に失敗してしまう。
+          currentPublicUserProvider.overrideWith(
+            (ref) async =>
+                const PublicUserRow(authProvider: 'email', emailVerified: true),
+          ),
         ],
         child: const MaterialApp(home: ProfileEditScreen()),
       ),

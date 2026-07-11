@@ -21,6 +21,10 @@ class DebugMenuScreen extends StatelessWidget {
               child: const Text('プロフィール編集'),
             ),
             ElevatedButton(
+              onPressed: () => context.go('/profile/setup'),
+              child: const Text('初回プロフィール設定'),
+            ),
+            ElevatedButton(
               onPressed: () => context.go('/settings'),
               child: const Text('設定・マイページ'),
             ),

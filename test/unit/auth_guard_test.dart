@@ -61,6 +61,88 @@ void main() {
     });
   });
 
+  group('profileSetupRedirect', () {
+    test('does not redirect when there is no logged-in user', () {
+      final result = profileSetupRedirect(user: null, location: '/signup');
+      expect(result, isNull);
+    });
+
+    test('does not redirect a user who already completed setup', () {
+      final user = PublicUserRow(
+        authProvider: 'email',
+        emailVerified: true,
+        profileCompletedAt: DateTime(2026, 7),
+      );
+      final result = profileSetupRedirect(
+        user: user,
+        location: '/some-future-screen',
+      );
+      expect(result, isNull);
+    });
+
+    test('does not redirect when already on an allow-listed path', () {
+      const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+      final result = profileSetupRedirect(
+        user: user,
+        location: '/profile/setup',
+      );
+      expect(result, isNull);
+    });
+
+    test(
+      'redirects a user who has not completed setup to profile/setup',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(
+          user: user,
+          location: '/some-future-screen',
+        );
+        expect(result, '/profile/setup');
+      },
+    );
+
+    test('does not redirect an incomplete-profile user on the debug path', () {
+      const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+      final result = profileSetupRedirect(user: user, location: '/debug');
+      expect(result, isNull);
+    });
+
+    test(
+      'redirects an incomplete-profile user landing on the login screen path',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(user: user, location: '/');
+        expect(result, '/profile/setup');
+      },
+    );
+
+    test(
+      'does not redirect an incomplete-profile user on the password reset '
+      'request path',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(
+          user: user,
+          location: '/password-reset',
+        );
+        expect(result, isNull);
+      },
+    );
+
+    test(
+      'does not redirect an incomplete-profile user on the reset password '
+      'path (from the email link)',
+      () {
+        const user = PublicUserRow(authProvider: 'email', emailVerified: true);
+        final result = profileSetupRedirect(
+          user: user,
+          location: '/reset-password',
+        );
+        expect(result, isNull);
+      },
+    );
+  });
+
   group('authRequiredRedirect', () {
     test('does not redirect a logged-in user', () {
       const user = PublicUserRow(authProvider: 'email', emailVerified: true);
