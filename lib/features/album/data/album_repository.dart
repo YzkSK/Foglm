@@ -40,13 +40,13 @@ class SupabaseAlbumRepository implements AlbumRepository {
 
   @override
   Future<int> getDevelopingCount({required String groupId}) async {
-    final response = await _client
+    // select()を挟まずcount()を直接呼ぶことで、行データを取得しないHEAD
+    // リクエストにする(件数以外のレスポンスボディ転送を避けるため)。
+    return _client
         .from('photos')
-        .select('id')
+        .count()
         .eq('group_id', groupId)
-        .inFilter('status', _developingStatuses)
-        .count(CountOption.exact);
-    return response.count;
+        .inFilter('status', _developingStatuses);
   }
 }
 
