@@ -159,7 +159,10 @@ class _InitialProfileSetupScreenState
                           : const Text('はじめる'),
                     ),
                     const SizedBox(height: 8),
-                    LogoutButton(isBusy: isLoading),
+                    // プロフィール保存中でも常にログアウトできるようにする
+                    // ため、isLoading(保存中も含む)ではなくisSigningOutの
+                    // みを見る(他の呼び出し箇所と同様)。
+                    LogoutButton(isBusy: isSigningOut),
                   ],
                 ),
               ),
