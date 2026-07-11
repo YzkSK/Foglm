@@ -56,33 +56,51 @@ void main() {
     );
   }
 
-  testWidgets('shows the remaining count reported by Realtime and uploads '
-      'the captured photo', (tester) async {
-    when(
-      () => repository.uploadPhoto(
-        groupId: any(named: 'groupId'),
-        bytes: any(named: 'bytes'),
-      ),
-    ).thenAnswer((_) async {});
+  testWidgets(
+    'optimistically decrements the remaining count on a successful upload, '
+    'ahead of the Realtime confirmation',
+    (tester) async {
+      final controller = StreamController<int>();
+      addTearDown(controller.close);
+      when(
+        () => remainingShotsRepository.watchTodayShotsRemaining(
+          groupId: any(named: 'groupId'),
+        ),
+      ).thenAnswer((_) => controller.stream);
+      when(
+        () => repository.uploadPhoto(
+          groupId: any(named: 'groupId'),
+          bytes: any(named: 'bytes'),
+        ),
+      ).thenAnswer((_) async {});
 
-    await tester.pumpWidget(pumpApp());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(pumpApp());
+      controller.add(10);
+      await tester.pumpAndSettle();
 
-    expect(find.text('残り 10 枚'), findsOneWidget);
+      expect(find.text('残り 10 枚'), findsOneWidget);
 
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
 
-    verify(
-      () => repository.uploadPhoto(
-        groupId: 'group-1',
-        bytes: any(named: 'bytes'),
-      ),
-    ).called(1);
-    // 残数の減少はupload成功そのものではなく、Realtime経由での
-    // get_today_shots_remaining再取得によって反映される(仕様書 5.2.3参照)。
-    expect(find.text('残り 10 枚'), findsOneWidget);
-  });
+      verify(
+        () => repository.uploadPhoto(
+          groupId: 'group-1',
+          bytes: any(named: 'bytes'),
+        ),
+      ).called(1);
+      // 自分のphotos INSERTがRealtime経由で反映されるまでのラグの間、
+      // ローカルの楽観的減算により先に9枚と表示する(仕様書 5.2.3参照)。
+      expect(find.text('残り 9 枚'), findsOneWidget);
+
+      // Realtimeが自分の撮影を反映して9を発行しても、楽観的減算が二重に
+      // 効いて8枚にはならず、9枚のまま変わらないことを確認する。
+      controller.add(9);
+      await tester.pumpAndSettle();
+
+      expect(find.text('残り 9 枚'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'reflects a Realtime update pushed after another member shoots',
@@ -128,9 +146,22 @@ void main() {
   });
 
   testWidgets(
-    'shows the daily limit message and zeroes the remaining count when '
-    'the server reports daily_limit_reached',
+    'shows the daily limit message, zeroes the remaining count immediately, '
+    'and stays at 0 once the forced refetch confirms it',
     (tester) async {
+      // 別メンバーの撮影と競合して自分の撮影だけが上限超過で弾かれた状況を
+      // 模す: 購読開始時点では残り1枚に見えていたが、実際にはDB側で既に
+      // 上限に達しており(自分の撮影はphotosにINSERTされない)、明示的な
+      // 再取得(invalidate)が呼ばれて初めて本当の値(0枚)が届く。
+      var watchCallCount = 0;
+      when(
+        () => remainingShotsRepository.watchTodayShotsRemaining(
+          groupId: any(named: 'groupId'),
+        ),
+      ).thenAnswer((_) {
+        watchCallCount++;
+        return Stream.value(watchCallCount == 1 ? 1 : 0);
+      });
       when(
         () => repository.uploadPhoto(
           groupId: any(named: 'groupId'),
@@ -141,10 +172,14 @@ void main() {
       await tester.pumpWidget(pumpApp());
       await tester.pumpAndSettle();
 
+      expect(find.text('残り 1 枚'), findsOneWidget);
+
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
 
       expect(find.text('本日の撮影上限に達しました'), findsOneWidget);
+      // 再取得が本当の値(0枚)を確認した後も、上書き解除で古い1枚に
+      // 戻ったりせず0枚のまま表示され続けることを確認する。
       expect(find.text('残り 0 枚'), findsOneWidget);
     },
   );
@@ -168,6 +203,30 @@ void main() {
     expect(find.text('写真のアップロードに失敗しました。時間をおいて再度お試しください'), findsOneWidget);
     expect(find.text('残り 10 枚'), findsOneWidget);
   });
+
+  testWidgets(
+    'fails safe (shutter disabled) without crashing when the remaining '
+    'count stream errors',
+    (tester) async {
+      when(
+        () => remainingShotsRepository.watchTodayShotsRemaining(
+          groupId: any(named: 'groupId'),
+        ),
+      ).thenAnswer(
+        (_) => Stream<int>.error(Exception('get_today_shots_remaining failed')),
+      );
+
+      await tester.pumpWidget(pumpApp());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('残り 0 枚'), findsOneWidget);
+      final shutterButton = tester.widget<FloatingActionButton>(
+        find.byType(FloatingActionButton),
+      );
+      expect(shutterButton.onPressed, isNull);
+    },
+  );
 
   testWidgets('ignores a second tap while the first capture is in flight', (
     tester,

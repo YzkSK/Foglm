@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
@@ -41,7 +42,15 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   // サーバーが上限超過(daily_limit_reached)を返した場合、Realtime経由の
   // 反映(他メンバーの撮影がないと発火しない)を待たずに即座にシャッターを
   // 操作不可にするためのローカルな上書きフラグ(仕様書 5.2.3参照)。
+  // remainingShotsProviderが新しい値を1回でも発行したら、そちらの方が
+  // 新しいサーバー真実であるため解除する(そうしないと、日付が変わって
+  // 上限がリセットされても画面を開いたままだと永久に0のままになる)。
   bool _limitReachedOverride = false;
+  // 撮影成功直後、自分のphotos INSERTがRealtime経由で反映されるまでの
+  // ラグの間、残数バッジ・シャッターの操作可否を楽観的に更新するための
+  // ローカルな減算量。remainingShotsProviderが新しい値を発行したら
+  // (自分の撮影も含めて反映済みのはずなので)0に戻す。
+  int _optimisticDecrement = 0;
 
   @override
   void initState() {
@@ -100,6 +109,16 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       await ref
           .read(uploadPhotoControllerProvider.notifier)
           .submit(groupId: widget.groupId, bytes: bytes);
+
+      if (!mounted) {
+        return;
+      }
+      final uploadState = ref.read(uploadPhotoControllerProvider);
+      if (!uploadState.hasError) {
+        // 自分のphotos INSERTがRealtimeで反映されるまでのラグの間、
+        // 残数表示・シャッターの操作可否を楽観的に更新する。
+        setState(() => _optimisticDecrement++);
+      }
     } finally {
       if (mounted) {
         setState(() => _isCapturing = false);
@@ -110,9 +129,42 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     final remainingAsync = ref.watch(remainingShotsProvider(widget.groupId));
+
+    ref.listen<AsyncValue<int>>(remainingShotsProvider(widget.groupId), (
+      previous,
+      next,
+    ) {
+      // remainingShotsProviderが新しい値を発行したら、それがローカルの
+      // 上書き・楽観的減算より新しいサーバー真実になる。上書きしたままだと
+      // 日付が変わって上限がリセットされても画面を開いたままだと永久に
+      // 古い状態に固定されてしまうため、ここで解除する。
+      if (next.hasValue &&
+          (_limitReachedOverride || _optimisticDecrement != 0)) {
+        setState(() {
+          _limitReachedOverride = false;
+          _optimisticDecrement = 0;
+        });
+      }
+      final error = next.error;
+      if (error != null) {
+        // 残数取得の失敗を握り潰さず記録する。最終的な上限担保はDBトリガー
+        // 側にあるため、この画面ではfail-safe(0扱いでシャッターを止める)
+        // にする。
+        developer.log(
+          'remainingShotsProvider failed to load',
+          name: 'CameraScreen',
+          error: error,
+          stackTrace: next.stackTrace,
+        );
+      }
+    });
+
     // 取得中・取得失敗の間はまだ実際の残数が分からないため、上限超過を
     // 防ぐ安全側の挙動としてシャッターを操作不可にする(仕様書 5.2.3参照)。
-    final remaining = _limitReachedOverride ? 0 : (remainingAsync.value ?? 0);
+    final rawRemaining = remainingAsync.value ?? 0;
+    final remaining = _limitReachedOverride
+        ? 0
+        : (rawRemaining - _optimisticDecrement).clamp(0, rawRemaining);
     final isUploading =
         _isCapturing ||
         ref.watch(
@@ -130,6 +182,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
       }
       if (error is DailyLimitReachedFailure) {
         setState(() => _limitReachedOverride = true);
+        // 自分の撮影は上限超過でDBに登録されなかった(photosがINSERTされて
+        // いない)ため、Realtime購読だけでは更新されない。明示的に
+        // 再取得させることで、上のref.listenが実際のサーバー値が届き
+        // 次第_limitReachedOverrideを解除できるようにする。
+        ref.invalidate(remainingShotsProvider(widget.groupId));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('本日の撮影上限に達しました')),
         );
