@@ -1,8 +1,9 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import sharp from "npm:sharp@0.33.5";
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 import { isValidUuid } from "../_shared/validation.ts";
 import { jsonResponse } from "../_shared/http.ts";
 import {
+  boxBlur,
   buildStoragePath,
   cacheControlForPhotoVariant,
   extensionForImageType,
@@ -11,9 +12,12 @@ import {
   takenDateInAsiaTokyo,
 } from "./logic.ts";
 
-// ボヤけ版のサイズ・ぼかし強度。原本を復元不可能な程度まで縮小・ぼかす(仕様書 8.1参照)。
+// ボヤけ版のサイズ・ぼかし半径。原本を復元不可能な程度まで縮小・ぼかす(仕様書 8.1参照)。
+// 旧実装(sharp)はSupabase Edge RuntimeのARM64環境でネイティブバイナリを
+// ロードできずクラッシュしていたため(issue #202参照)、Deno向けの純粋な
+// TypeScript実装であるimagescriptに置き換えている。
 const BLURRED_WIDTH = 32;
-const BLURRED_BLUR_SIGMA = 12;
+const BLUR_RADIUS = 3;
 
 Deno.serve(async (req: Request) => {
   let form: FormData;
@@ -83,11 +87,10 @@ Deno.serve(async (req: Request) => {
 
   let blurredBytes: Uint8Array;
   try {
-    blurredBytes = await sharp(originalBytes)
-      .resize({ width: BLURRED_WIDTH })
-      .blur(BLURRED_BLUR_SIGMA)
-      .jpeg({ quality: 60 })
-      .toBuffer();
+    const decoded = await Image.decode(originalBytes);
+    const resized = decoded.resize(BLURRED_WIDTH, Image.RESIZE_AUTO);
+    const blurred = boxBlur(resized, BLUR_RADIUS);
+    blurredBytes = await blurred.encodeJPEG(60);
   } catch {
     return jsonResponse(400, { error: "invalid_image" });
   }

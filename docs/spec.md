@@ -411,7 +411,7 @@ S01 ログイン
 ### 6.3 撮影・フィルム関連
 | API | 種別 | 概要 |
 |---|---|---|
-| `upload_photo` | Edge Function | 原本を非公開ストレージへ保存 → 当日撮影数が10枚未満か検証 → ボヤけ版を生成（sharpで縮小・ぼかし処理）→ `photos` レコードを `status=pending_vote` で作成。**その日・そのグループの `daily_votes` 行がまだ存在しない場合は、この時点で `status=open` として新規作成する**（UPSERTで、既に存在する場合は何もしない） |
+| `upload_photo` | Edge Function | 原本を非公開ストレージへ保存 → 当日撮影数が10枚未満か検証 → ボヤけ版を生成（imagescriptで縮小・ぼかし処理）→ `photos` レコードを `status=pending_vote` で作成。**その日・そのグループの `daily_votes` 行がまだ存在しない場合は、この時点で `status=open` として新規作成する**（UPSERTで、既に存在する場合は何もしない） |
 | `get_today_shots_remaining` | Query | 当日のグループの残り撮影可能枚数を取得 |
 
 ### 6.4 投票関連
@@ -467,7 +467,7 @@ S01 ログイン
 
 ### 8.1 セキュリティ（最重要）
 - 撮影直後の **鮮明な原本は非公開ストレージにのみ保存**し、クライアント（アプリ）には一切配信しない
-- ボヤけ画像の生成は **必ずサーバー側（Edge Function + sharp）**で行う。クライアント側での加工は行わない（原本がそのまま端末に渡ることを防ぐため）
+- ボヤけ画像の生成は **必ずサーバー側（Edge Function + imagescript）**で行う。クライアント側での加工は行わない（原本がそのまま端末に渡ることを防ぐため）
 - 現像日が来るまでは、署名付きURLもボヤけ版のみ発行する
 - Supabase の **RLS（Row Level Security）** により、写真・コメント等は同一グループの **現役メンバー**（`group_members.left_at IS NULL`）のみ閲覧・操作可能とする。脱退済みメンバー（`left_at` が設定されたユーザー）は、脱退前に見えていた写真も含めて即座に閲覧不可となる
 
@@ -490,7 +490,7 @@ S01 ログイン
 | アプリ本体 | Flutter（Dart）＋ camera パッケージ |
 | バックエンド全般 | Supabase（Auth・PostgreSQL・Storage・Realtime） |
 | スケジュール処理 | Supabase Cron（Scheduled Functions）＋ Supabase Edge Function |
-| 画像処理（ボヤけ生成） | Edge Function ＋ sharp |
+| 画像処理（ボヤけ生成） | Edge Function ＋ imagescript |
 | プッシュ通知 | Firebase Cloud Messaging（FCM） |
 
 ---

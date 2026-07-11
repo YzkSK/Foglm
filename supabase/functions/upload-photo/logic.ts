@@ -1,9 +1,12 @@
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 import { CACHE_REFRESH_BUFFER_SECONDS } from "../_shared/photo-cache.ts";
 
+// imagescript(Image.decode)がPNG・JPEG・TIFFのみ対応でWebPをデコードできない
+// ため、対応形式からimage/webpを外している(issue #202参照。カメラ撮影画面
+// (S06)はJPEGのみ送信するため実運用上の影響はない)。
 const SUPPORTED_IMAGE_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
-  "image/webp": "webp",
 };
 
 export type PhotoVariant = "original" | "blurred";
@@ -54,6 +57,52 @@ export function mapPhotoInsertError(code: string | undefined): PhotoInsertErrorM
     return { status: 409, error: "daily_limit_reached" };
   }
   return { status: 500, error: "unknown" };
+}
+
+// 単純なボックスブラー。ボヤけ版生成の最終ステップとして、原本を復元
+// 不可能な程度まで細部を潰す(仕様書 8.1参照)。imagescriptにはブラー機能が
+// ないため、resize後の極小画像(BLURRED_WIDTH参照)に対して自前で実装する。
+// 画像が小さいため、O(width*height*radius^2)の素朴な実装でも十分高速。
+export function boxBlur(image: Image, radius: number): Image {
+  const { width, height } = image;
+  const source = image.clone();
+  const blurred = new Image(width, height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let a = 0;
+      let count = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        const sy = y + dy;
+        if (sy < 0 || sy >= height) continue;
+        for (let dx = -radius; dx <= radius; dx++) {
+          const sx = x + dx;
+          if (sx < 0 || sx >= width) continue;
+          const [pr, pg, pb, pa] = Image.colorToRGBA(
+            source.getPixelAt(sx + 1, sy + 1),
+          );
+          r += pr;
+          g += pg;
+          b += pb;
+          a += pa;
+          count++;
+        }
+      }
+      blurred.setPixelAt(
+        x + 1,
+        y + 1,
+        Image.rgbaToColor(
+          Math.round(r / count),
+          Math.round(g / count),
+          Math.round(b / count),
+          Math.round(a / count),
+        ),
+      );
+    }
+  }
+  return blurred;
 }
 
 // taken_at を日本時間(Asia/Tokyo)に変換した日付(YYYY-MM-DD)を求める。
