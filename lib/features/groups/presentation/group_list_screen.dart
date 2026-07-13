@@ -110,6 +110,8 @@ class _GroupListBody extends StatelessWidget {
                 trailing: Wrap(
                   alignment: WrapAlignment.end,
                   crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
                     TextButton(
                       onPressed: () => context.push(
@@ -145,12 +147,12 @@ class _GroupListBody extends StatelessWidget {
           ),
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: () => context.go('/groups/new'),
+          onPressed: () => context.push('/groups/new'),
           child: const Text('固定グループを作成'),
         ),
         const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () => context.go('/groups/new-event'),
+          onPressed: () => context.push('/groups/new-event'),
           child: const Text('イベントグループを作成'),
         ),
         const SizedBox(height: 8),

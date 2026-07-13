@@ -274,6 +274,72 @@ void main() {
     },
   );
 
+  testWidgets(
+    'does not navigate to the candidates screen if the user closed the '
+    'camera screen before the upload finished (issue #272レビュー対応)',
+    (tester) async {
+      final uploadCompleter = Completer<void>();
+      when(
+        () => repository.uploadPhoto(
+          groupId: any(named: 'groupId'),
+          bytes: any(named: 'bytes'),
+        ),
+      ).thenAnswer((_) => uploadCompleter.future);
+
+      final router = GoRouter(
+        initialLocation: '/groups',
+        routes: [
+          GoRoute(
+            path: '/groups',
+            builder: (context, state) =>
+                const Scaffold(body: Text('グループ一覧画面プレースホルダー')),
+          ),
+          GoRoute(
+            path: '/camera',
+            builder: (context, state) => const CameraScreen(groupId: 'group-1'),
+          ),
+          GoRoute(
+            path: '/candidates',
+            builder: (context, state) =>
+                const Scaffold(body: Text('候補一覧画面プレースホルダー')),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            photoRepositoryProvider.overrideWithValue(repository),
+            remainingShotsRepositoryProvider.overrideWithValue(
+              remainingShotsRepository,
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      unawaited(router.push('/camera'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(FloatingActionButton));
+      // takePicture()・readAsBytes()の完了とsubmit()の開始(アップロード
+      // 中の状態)まで進める。
+      await tester.pump();
+      await tester.pump();
+
+      // アップロード中に閉じるボタンを押して画面を離脱する。
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pump();
+
+      // 離脱後にアップロードが成功しても、候補一覧へは遷移しない
+      // (離脱前にサーバーへ送信済みの写真自体は保存される)。
+      uploadCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('候補一覧画面プレースホルダー'), findsNothing);
+      expect(find.text('グループ一覧画面プレースホルダー'), findsOneWidget);
+    },
+  );
+
   testWidgets('ignores a second tap while the first capture is in flight', (
     tester,
   ) async {
