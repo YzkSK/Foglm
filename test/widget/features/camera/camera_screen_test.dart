@@ -10,6 +10,7 @@ import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/camera/data/photo_repository.dart';
 import 'package:foglm/features/camera/data/remaining_shots_repository.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'fake_camera_platform.dart';
@@ -45,6 +46,21 @@ void main() {
   });
 
   Widget pumpApp() {
+    final router = GoRouter(
+      initialLocation: '/camera',
+      routes: [
+        GoRoute(
+          path: '/camera',
+          builder: (context, state) => const CameraScreen(groupId: 'group-1'),
+        ),
+        GoRoute(
+          path: '/candidates',
+          builder: (context, state) =>
+              const Scaffold(body: Text('候補一覧画面プレースホルダー')),
+        ),
+      ],
+    );
+
     return ProviderScope(
       overrides: [
         photoRepositoryProvider.overrideWithValue(repository),
@@ -52,7 +68,7 @@ void main() {
           remainingShotsRepository,
         ),
       ],
-      child: const MaterialApp(home: CameraScreen(groupId: 'group-1')),
+      child: MaterialApp.router(routerConfig: router),
     );
   }
 
@@ -81,7 +97,12 @@ void main() {
       expect(find.text('残り 10 枚'), findsOneWidget);
 
       await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
+      // アップロード成功後はcontext.pushで候補一覧へ即座に遷移する(仕様書
+      // 4.2「S06→撮影後S07へ」参照)ため、pumpAndSettle()で遷移アニメーション
+      // まで完了させるとカメラ画面のバッジが画面から隠れて見えなくなる。
+      // 楽観的減算の反映(setState)を待つだけの数フレームに留める。
+      await tester.pump();
+      await tester.pump();
 
       verify(
         () => repository.uploadPhoto(
@@ -96,9 +117,34 @@ void main() {
       // Realtimeが自分の撮影を反映して9を発行しても、楽観的減算が二重に
       // 効いて8枚にはならず、9枚のまま変わらないことを確認する。
       controller.add(9);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       expect(find.text('残り 9 枚'), findsOneWidget);
+
+      // 遷移アニメーション等の残り処理を最後にまとめて消化しておく。
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'navigates to the today candidates screen after a successful upload '
+    '(仕様書 4.2: S06 → 撮影後S07へ)',
+    (tester) async {
+      when(
+        () => repository.uploadPhoto(
+          groupId: any(named: 'groupId'),
+          bytes: any(named: 'bytes'),
+        ),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(pumpApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('候補一覧画面プレースホルダー'), findsOneWidget);
     },
   );
 

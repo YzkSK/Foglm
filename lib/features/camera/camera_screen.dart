@@ -10,6 +10,8 @@ import 'package:foglm/features/camera/application/upload_photo_controller.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
 import 'package:foglm/features/camera/remaining_shots_provider.dart';
 import 'package:foglm/features/camera/widgets/shutter_button.dart';
+import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/camera`ルートの`extra`として渡す引数。
 class CameraArgs {
@@ -118,6 +120,15 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         // 自分のphotos INSERTがRealtimeで反映されるまでのラグの間、
         // 残数表示・シャッターの操作可否を楽観的に更新する。
         setState(() => _optimisticDecrement++);
+        // 撮影後は今日の候補一覧(S07)へ遷移する(仕様書 4.2画面遷移図
+        // 「S06 カメラ撮影 → 撮影後S07へ」参照)。pushにすることで、
+        // 候補一覧から戻ればこのカメラ画面に戻って連続撮影できる。
+        unawaited(
+          context.push(
+            '/candidates',
+            extra: CandidateListArgs(groupId: widget.groupId),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -211,47 +222,65 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      // AppBarを敢えて使わず、カメラプレビューを画面いっぱいに表示する
+      // (仕様書 4.1 S06参照)。戻る導線は閉じるボタンとして重ねて表示する
+      // (カメラ初期化中・失敗時でも操作できるようFutureBuilderの外に置く)。
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          FutureBuilder<void>(
+            future: _initializeControllerFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (snapshot.hasError || _controller == null) {
-            return const Center(
-              child: Text(
-                'カメラを利用できません',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+              if (snapshot.hasError || _controller == null) {
+                return const Center(
+                  child: Text(
+                    'カメラを利用できません',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
+              }
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              CameraPreview(_controller!),
-              Positioned(
-                top: 48,
-                right: 24,
-                child: _RemainingShotsBadge(remaining: remaining),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  CameraPreview(_controller!),
+                  Positioned(
+                    top: 48,
+                    right: 24,
+                    child: _RemainingShotsBadge(remaining: remaining),
+                  ),
+                  Positioned(
+                    bottom: 32,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: isUploading
+                          ? const CircularProgressIndicator()
+                          : ShutterButton(
+                              remaining: remaining,
+                              onPressed: _onShutterPressed,
+                            ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                tooltip: '閉じる',
+                onPressed: () => context.pop(),
               ),
-              Positioned(
-                bottom: 32,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: isUploading
-                      ? const CircularProgressIndicator()
-                      : ShutterButton(
-                          remaining: remaining,
-                          onPressed: _onShutterPressed,
-                        ),
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ),
+        ],
       ),
     );
   }
