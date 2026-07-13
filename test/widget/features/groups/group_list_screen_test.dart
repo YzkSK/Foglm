@@ -48,6 +48,16 @@ void main() {
               const Scaffold(body: Text('カメラ画面プレースホルダー')),
         ),
         GoRoute(
+          path: '/candidates',
+          builder: (context, state) =>
+              const Scaffold(body: Text('候補一覧画面プレースホルダー')),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) =>
+              const Scaffold(body: Text('設定画面プレースホルダー')),
+        ),
+        GoRoute(
           path: '/groups/new',
           builder: (context, state) =>
               const Scaffold(body: Text('グループ作成画面プレースホルダー')),
@@ -87,6 +97,50 @@ void main() {
 
     expect(find.text('参加しているグループはまだありません'), findsOneWidget);
   });
+
+  testWidgets(
+    'navigates to the camera screen and can navigate back (issue #253)',
+    (tester) async {
+      await pumpScreen(tester, groups: [soloGroup, fixedGroup]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('固定グループA'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('カメラ画面プレースホルダー'), findsOneWidget);
+
+      // pushで遷移しているため、戻るスタックが残りグループ一覧へ戻れる
+      // (仕様書上context.goだとスタックが置き換わり戻れなかった不具合)。
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      expect(navigator.canPop(), isTrue);
+    },
+  );
+
+  testWidgets(
+    'navigates to the candidates screen via the 候補 button (issue #254)',
+    (tester) async {
+      await pumpScreen(tester, groups: [soloGroup, fixedGroup]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('候補'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('候補一覧画面プレースホルダー'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'navigates to the settings screen via the AppBar icon (issue #254)',
+    (tester) async {
+      await pumpScreen(tester, groups: [soloGroup]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.settings));
+      await tester.pumpAndSettle();
+
+      expect(find.text('設定画面プレースホルダー'), findsOneWidget);
+    },
+  );
 
   testWidgets('navigates to the create-group screen', (tester) async {
     await pumpScreen(tester, groups: [soloGroup]);
