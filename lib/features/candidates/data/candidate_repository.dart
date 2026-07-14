@@ -1,7 +1,3 @@
-// 他のRepositoryと同じくmocktailでの差し替えテストを可能にするため、
-// 単一メソッドでもクラスとして定義する。
-// ignore_for_file: one_member_abstracts
-
 import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,17 +5,12 @@ import 'package:foglm/core/supabase/supabase_providers.dart';
 import 'package:foglm/core/utils/date_formatting.dart';
 import 'package:foglm/features/candidates/domain/candidate_logic.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
+import 'package:foglm/features/candidates/domain/candidate_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ボヤけ版の署名付きURLの有効期限。閲覧セッション中は十分持たせつつ、
 /// 非公開ストレージのURLを無期限に共有可能にしないための値(仕様書 8.1参照)。
 const _blurredUrlExpiresInSeconds = 3600;
-
-abstract class CandidateRepository {
-  Future<List<CandidatePhotoRow>> getTodayCandidates({
-    required String groupId,
-  });
-}
 
 class SupabaseCandidateRepository implements CandidateRepository {
   SupabaseCandidateRepository(this._client);

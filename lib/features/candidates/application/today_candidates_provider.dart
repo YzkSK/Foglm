@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:foglm/features/candidates/data/candidate_repository.dart';
+import 'package:foglm/features/candidates/application/usecase/get_today_candidates_usecase.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 
 /// 指定したグループの、当日撮影された投票対象の候補写真一覧(ボヤけ版URL・
@@ -12,6 +12,6 @@ import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 final todayCandidatesProvider =
     FutureProvider.family<List<CandidatePhotoRow>, String>((ref, groupId) {
       return ref
-          .watch(candidateRepositoryProvider)
-          .getTodayCandidates(groupId: groupId);
+          .watch(getTodayCandidatesUseCaseProvider)
+          .call(groupId: groupId);
     });
