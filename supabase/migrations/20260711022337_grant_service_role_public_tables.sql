@@ -1,3 +1,8 @@
+-- 注意(#209): 本ファイルは並行ブランチのマージ事故により、
+-- 20260711034030_grant_service_role_public_tables.sql と完全に同一内容で重複している。
+-- 適用済みマイグレーションの改変は履歴不整合のリスクがあるため、あえて修正せずそのまま残す。
+-- 詳細はdocs/setup/supabase.mdおよびissue #209を参照。
+--
 -- service_role(#181): publicスキーマの全テーブルに対し、service_roleへのGRANTが1件も
 -- 存在しなかった(既存マイグレーションではauthenticatedロールへのGRANTのみが明示的に
 -- 行われていた)。service_roleはEdge Function等の信頼されたサーバー側処理から使う想定の
