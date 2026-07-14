@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:foglm/features/camera/data/remaining_shots_repository.dart';
+import 'package:foglm/features/camera/application/usecase/watch_remaining_shots_usecase.dart';
 
 /// 指定したグループの当日の残り撮影可能枚数(仕様書 5.2.3参照)。
 ///
@@ -12,7 +12,5 @@ final remainingShotsProvider = StreamProvider.family<int, String>((
   ref,
   groupId,
 ) {
-  return ref
-      .watch(remainingShotsRepositoryProvider)
-      .watchTodayShotsRemaining(groupId: groupId);
+  return ref.watch(watchRemainingShotsUseCaseProvider).call(groupId: groupId);
 });

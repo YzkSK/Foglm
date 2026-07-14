@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:foglm/features/camera/data/photo_repository.dart';
+import 'package:foglm/features/camera/application/usecase/upload_photo_usecase.dart';
 
 class UploadPhotoController extends AsyncNotifier<void> {
   @override
@@ -15,8 +15,8 @@ class UploadPhotoController extends AsyncNotifier<void> {
     state = const AsyncLoading<void>();
     state = await AsyncValue.guard(
       () => ref
-          .read(photoRepositoryProvider)
-          .uploadPhoto(groupId: groupId, bytes: bytes),
+          .read(uploadPhotoUseCaseProvider)
+          .call(groupId: groupId, bytes: bytes),
     );
   }
 }

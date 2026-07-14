@@ -1,22 +1,12 @@
-// 他のRepository(AuthRepository/GroupRepository)と同じくmocktailでの差し替え
-// テストを可能にするため、単一メソッドでもクラスとして定義する。
-// ignore_for_file: one_member_abstracts
-
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
+import 'package:foglm/features/camera/domain/photo_repository.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-abstract class PhotoRepository {
-  Future<void> uploadPhoto({
-    required String groupId,
-    required Uint8List bytes,
-  });
-}
 
 class SupabasePhotoRepository implements PhotoRepository {
   SupabasePhotoRepository(this._client);

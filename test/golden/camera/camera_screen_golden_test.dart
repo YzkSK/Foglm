@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/camera/data/photo_repository.dart';
 import 'package:foglm/features/camera/data/remaining_shots_repository.dart';
+import 'package:foglm/features/camera/domain/photo_repository.dart';
+import 'package:foglm/features/camera/domain/remaining_shots_repository.dart';
 import 'package:foglm/features/camera/presentation/camera_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
