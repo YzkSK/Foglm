@@ -65,7 +65,8 @@ jobs:
 
           new_files=$(comm -13 \
             <(echo "$main_files" | sort) \
-            <(ls supabase/migrations | sed 's#^#supabase/migrations/#' | sort))
+            <(ls supabase/migrations | grep -E '^[0-9]{14}_.*\.sql$' \
+              | sed 's#^#supabase/migrations/#' | sort))
 
           if [ -z "$new_files" ]; then
             exit 0
