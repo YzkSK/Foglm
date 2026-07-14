@@ -2,9 +2,9 @@ import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
+import 'package:foglm/features/auth/application/my_profile_provider.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
-import 'package:foglm/features/auth/data/my_profile_provider.dart';
 
 class UpdateProfileController extends AsyncNotifier<void> {
   @override
