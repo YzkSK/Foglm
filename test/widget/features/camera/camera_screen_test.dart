@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -225,6 +226,33 @@ void main() {
         find.byType(FloatingActionButton),
       );
       expect(shutterButton.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'sizes the camera preview to the correct portrait aspect ratio '
+    'without shrinking it',
+    (tester) async {
+      // FakeCameraPlatformはpreviewSizeを1920x1080(16:9)で初期化し、
+      // CameraControllerのdeviceOrientationはデフォルトでportraitUpのため、
+      // CameraPreviewは9:16(=1/aspectRatio)の縦長プレビューになるはず。
+      // AspectRatioをCameraPreviewの外側にさらに重ねる実装ミスがあると、
+      // 16:9(横長)の比率で二重に制約され、画面の一部にしか収まらない
+      // 極端に小さいプレビューになってしまう(400x800画面で400x225相当)。
+      // buildPreview()が透明なウィジェットを返すためgolden画像では
+      // この崩れを検知できないので、実際のレンダリングサイズで検証する。
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(pumpApp());
+      await tester.pumpAndSettle();
+
+      final previewSize = tester.getSize(find.byType(CameraPreview));
+
+      expect(previewSize.width, 400);
+      expect(previewSize.height, closeTo(711.11, 1));
     },
   );
 
