@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/groups/application/my_groups_provider.dart';
 import 'package:foglm/features/groups/data/group_repository.dart';
+import 'package:foglm/features/groups/domain/group_repository.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
 import 'package:foglm/features/groups/presentation/group_list_screen.dart';
 import 'package:go_router/go_router.dart';

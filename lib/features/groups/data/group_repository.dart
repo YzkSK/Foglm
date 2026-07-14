@@ -4,28 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
 import 'package:foglm/core/utils/date_formatting.dart';
 import 'package:foglm/core/utils/fallback.dart';
+import 'package:foglm/features/groups/domain/group_repository.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-abstract class GroupRepository {
-  Future<void> createGroup({required String name});
-
-  Future<void> createEventGroup({
-    required String name,
-    required DateTime startDate,
-    required DateTime endDate,
-  });
-
-  Future<List<MyGroupRow>> getMyGroups();
-
-  Future<void> joinGroupByCode({required String code});
-
-  Future<void> leaveGroup({required String groupId});
-
-  Future<String> createInviteCode({required String groupId});
-
-  Future<String?> getInviteCode({required String groupId});
-}
 
 class SupabaseGroupRepository implements GroupRepository {
   SupabaseGroupRepository(this._client);

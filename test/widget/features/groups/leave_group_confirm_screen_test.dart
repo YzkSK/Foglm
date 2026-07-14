@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/groups/data/group_repository.dart';
+import 'package:foglm/features/groups/domain/group_repository.dart';
 import 'package:foglm/features/groups/presentation/leave_group_confirm_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
