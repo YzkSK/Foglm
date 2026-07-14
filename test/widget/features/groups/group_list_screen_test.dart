@@ -30,6 +30,12 @@ void main() {
     mode: 'group',
     status: 'active',
   );
+  const archivedGroup = MyGroupRow(
+    id: 'group-2',
+    name: '固定グループB',
+    mode: 'group',
+    status: 'archived',
+  );
 
   Future<void> pumpScreen(
     WidgetTester tester, {
@@ -86,6 +92,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('参加しているグループはまだありません'), findsOneWidget);
+  });
+
+  testWidgets('does not navigate to the camera screen for an archived group', (
+    tester,
+  ) async {
+    await pumpScreen(tester, groups: [soloGroup, archivedGroup]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('固定グループB'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('カメラ画面プレースホルダー'), findsNothing);
   });
 
   testWidgets('navigates to the create-group screen', (tester) async {

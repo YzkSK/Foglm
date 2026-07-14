@@ -31,6 +31,12 @@ const _eventGroup = MyGroupRow(
   mode: 'event',
   status: 'active',
 );
+const _archivedGroup = MyGroupRow(
+  id: 'group-2',
+  name: '固定グループC',
+  mode: 'group',
+  status: 'archived',
+);
 
 Widget _pumpApp({
   required List<MyGroupRow> groups,
@@ -54,6 +60,15 @@ void main() {
       fileName: 'group_list_screen_initial',
       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
       builder: () => _pumpApp(groups: [_soloGroup, _fixedGroup, _eventGroup]),
+    ),
+  );
+
+  unawaited(
+    goldenTest(
+      'GroupListScreen disables the tile for an archived group',
+      fileName: 'group_list_screen_archived',
+      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
+      builder: () => _pumpApp(groups: [_soloGroup, _archivedGroup]),
     ),
   );
 
