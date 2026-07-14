@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foglm/features/candidates/application/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/data/candidate_repository.dart';
-import 'package:foglm/features/candidates/data/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 import 'package:mocktail/mocktail.dart';
 

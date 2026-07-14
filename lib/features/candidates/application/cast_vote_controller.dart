@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:foglm/features/candidates/data/today_candidates_provider.dart';
+import 'package:foglm/features/candidates/application/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/data/vote_repository.dart';
 
 class CastVoteController extends AsyncNotifier<void> {
