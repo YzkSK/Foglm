@@ -67,4 +67,32 @@ void main() {
     expect(state.hasError, isTrue);
     expect(state.error, isA<AuthException>());
   });
+
+  test('signOut clears the FCM token before signing out', () async {
+    when(() => repository.updateFcmToken(null)).thenAnswer((_) async {});
+    when(() => repository.signOut()).thenAnswer((_) async {});
+
+    await container.read(signOutControllerProvider.notifier).signOut();
+
+    verifyInOrder([
+      () => repository.updateFcmToken(null),
+      () => repository.signOut(),
+    ]);
+  });
+
+  test(
+    'signOut still succeeds when clearing the FCM token fails',
+    () async {
+      when(
+        () => repository.updateFcmToken(null),
+      ).thenThrow(Exception('network error'));
+      when(() => repository.signOut()).thenAnswer((_) async {});
+
+      await container.read(signOutControllerProvider.notifier).signOut();
+
+      final state = container.read(signOutControllerProvider);
+      expect(state, const AsyncData<void>(null));
+      verify(() => repository.signOut()).called(1);
+    },
+  );
 }
