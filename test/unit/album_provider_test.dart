@@ -1,26 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foglm/features/album/application/album_provider.dart';
-import 'package:foglm/features/album/data/album_repository.dart';
+import 'package:foglm/features/album/application/usecase/get_album_usecase.dart';
+import 'package:foglm/features/album/application/usecase/get_developing_count_usecase.dart';
 import 'package:foglm/features/album/domain/album_photo.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockAlbumRepository extends Mock implements AlbumRepository {}
+class MockGetAlbumUseCase extends Mock implements GetAlbumUseCase {}
+
+class MockGetDevelopingCountUseCase extends Mock
+    implements GetDevelopingCountUseCase {}
 
 void main() {
-  late MockAlbumRepository repository;
+  late MockGetAlbumUseCase getAlbumUseCase;
+  late MockGetDevelopingCountUseCase getDevelopingCountUseCase;
   late ProviderContainer container;
 
   setUp(() {
-    repository = MockAlbumRepository();
+    getAlbumUseCase = MockGetAlbumUseCase();
+    getDevelopingCountUseCase = MockGetDevelopingCountUseCase();
     container = ProviderContainer(
-      overrides: [albumRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        getAlbumUseCaseProvider.overrideWithValue(getAlbumUseCase),
+        getDevelopingCountUseCaseProvider.overrideWithValue(
+          getDevelopingCountUseCase,
+        ),
+      ],
     );
     addTearDown(container.dispose);
   });
 
   group('albumProvider', () {
-    test('resolves to the photos returned by the repository', () async {
+    test('resolves to the photos returned by the usecase', () async {
       final photos = [
         AlbumPhotoRow(
           id: 'photo-1',
@@ -29,29 +40,29 @@ void main() {
         ),
       ];
       when(
-        () => repository.getAlbum(groupId: 'group-1'),
+        () => getAlbumUseCase.call(groupId: 'group-1'),
       ).thenAnswer((_) async => photos);
 
       final result = await container.read(albumProvider('group-1').future);
 
       expect(result, photos);
-      verify(() => repository.getAlbum(groupId: 'group-1')).called(1);
+      verify(() => getAlbumUseCase.call(groupId: 'group-1')).called(1);
     });
 
     test('requests the album independently per groupId', () async {
       when(
-        () => repository.getAlbum(groupId: any(named: 'groupId')),
+        () => getAlbumUseCase.call(groupId: any(named: 'groupId')),
       ).thenAnswer((_) async => []);
 
       await container.read(albumProvider('group-1').future);
       await container.read(albumProvider('group-2').future);
 
-      verify(() => repository.getAlbum(groupId: 'group-1')).called(1);
-      verify(() => repository.getAlbum(groupId: 'group-2')).called(1);
+      verify(() => getAlbumUseCase.call(groupId: 'group-1')).called(1);
+      verify(() => getAlbumUseCase.call(groupId: 'group-2')).called(1);
     });
 
-    test('exposes the repository failure as AsyncError', () async {
-      when(() => repository.getAlbum(groupId: 'group-1')).thenAnswer(
+    test('exposes the usecase failure as AsyncError', () async {
+      when(() => getAlbumUseCase.call(groupId: 'group-1')).thenAnswer(
         (_) => Future<List<AlbumPhotoRow>>.error(Exception('unexpected')),
       );
 
@@ -68,9 +79,9 @@ void main() {
   });
 
   group('developingCountProvider', () {
-    test('resolves to the count returned by the repository', () async {
+    test('resolves to the count returned by the usecase', () async {
       when(
-        () => repository.getDevelopingCount(groupId: 'group-1'),
+        () => getDevelopingCountUseCase.call(groupId: 'group-1'),
       ).thenAnswer((_) async => 3);
 
       final result = await container.read(
@@ -80,9 +91,9 @@ void main() {
       expect(result, 3);
     });
 
-    test('exposes the repository failure as AsyncError', () async {
+    test('exposes the usecase failure as AsyncError', () async {
       when(
-        () => repository.getDevelopingCount(groupId: 'group-1'),
+        () => getDevelopingCountUseCase.call(groupId: 'group-1'),
       ).thenAnswer((_) => Future<int>.error(Exception('unexpected')));
 
       final subscription = container.listen(

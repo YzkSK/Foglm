@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:foglm/features/album/data/album_repository.dart';
+import 'package:foglm/features/album/application/usecase/get_album_usecase.dart';
+import 'package:foglm/features/album/application/usecase/get_developing_count_usecase.dart';
 import 'package:foglm/features/album/domain/album_photo.dart';
 
 /// 指定したグループの現像済み写真一覧(撮影日の新しい順)。アルバム画面
@@ -12,7 +13,7 @@ final albumProvider = FutureProvider.family<List<AlbumPhotoRow>, String>((
   ref,
   groupId,
 ) {
-  return ref.watch(albumRepositoryProvider).getAlbum(groupId: groupId);
+  return ref.watch(getAlbumUseCaseProvider).call(groupId: groupId);
 });
 
 /// 指定したグループの現像待ち枚数。現像待ちステータス表示(#32)の表示に
@@ -23,6 +24,6 @@ final developingCountProvider = FutureProvider.family<int, String>((
   groupId,
 ) {
   return ref
-      .watch(albumRepositoryProvider)
-      .getDevelopingCount(groupId: groupId);
+      .watch(getDevelopingCountUseCaseProvider)
+      .call(groupId: groupId);
 });
