@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/features/camera/presentation/camera_screen.dart';
 import 'package:foglm/features/groups/application/join_group_controller.dart';
-import 'package:foglm/features/groups/data/my_groups_provider.dart';
+import 'package:foglm/features/groups/application/my_groups_provider.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
 import 'package:foglm/features/groups/presentation/invite_screen.dart';
 import 'package:foglm/features/groups/presentation/leave_group_confirm_screen.dart';
