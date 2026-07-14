@@ -230,7 +230,12 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
           return Stack(
             fit: StackFit.expand,
             children: [
-              CameraPreview(_controller!),
+              // CameraPreview自身が内部でcontroller.value.aspectRatioに基づく
+              // 向き考慮済みのAspectRatioを持つため、ここでは緩い制約を与える
+              // Centerでラップするのみに留める。外側にAspectRatioを重ねると
+              // 内側の計算がtight制約で無効化され、特にポートレートで
+              // プレビューが極端に小さくなってしまう。
+              Center(child: CameraPreview(_controller!)),
               Positioned(
                 top: 48,
                 right: 24,
