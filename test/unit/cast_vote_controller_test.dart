@@ -4,8 +4,10 @@ import 'package:foglm/features/candidates/application/cast_vote_controller.dart'
 import 'package:foglm/features/candidates/application/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/application/usecase/cast_vote_usecase.dart';
 import 'package:foglm/features/candidates/application/usecase/get_today_candidates_usecase.dart';
-import 'package:foglm/features/candidates/data/vote_repository.dart';
-import 'package:foglm/features/candidates/domain/vote_repository.dart';
+import 'package:foglm/features/candidates/data/vote_repository.dart'
+    show voteRepositoryProvider;
+import 'package:foglm/features/candidates/domain/vote_repository.dart'
+    show VoteRepository;
 import 'package:mocktail/mocktail.dart';
 
 class MockCastVoteUseCase extends Mock implements CastVoteUseCase {}

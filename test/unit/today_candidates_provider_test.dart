@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foglm/features/candidates/application/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/application/usecase/get_today_candidates_usecase.dart';
-import 'package:foglm/features/candidates/data/candidate_repository.dart';
+import 'package:foglm/features/candidates/data/candidate_repository.dart'
+    show candidateRepositoryProvider;
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
-import 'package:foglm/features/candidates/domain/candidate_repository.dart';
+import 'package:foglm/features/candidates/domain/candidate_repository.dart'
+    show CandidateRepository;
 import 'package:mocktail/mocktail.dart';
 
 class MockGetTodayCandidatesUseCase extends Mock
