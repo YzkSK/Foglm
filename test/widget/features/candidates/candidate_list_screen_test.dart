@@ -4,9 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:foglm/features/candidates/data/candidate_repository.dart';
-import 'package:foglm/features/candidates/data/vote_repository.dart';
+import 'package:foglm/features/candidates/data/candidate_repository.dart'
+    show candidateRepositoryProvider;
+import 'package:foglm/features/candidates/data/vote_repository.dart'
+    show voteRepositoryProvider;
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
+import 'package:foglm/features/candidates/domain/candidate_repository.dart'
+    show CandidateRepository;
+import 'package:foglm/features/candidates/domain/vote_repository.dart'
+    show VoteRepository;
 import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
 import 'package:mocktail/mocktail.dart';
 

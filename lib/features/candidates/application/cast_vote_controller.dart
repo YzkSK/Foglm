@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/features/candidates/application/today_candidates_provider.dart';
-import 'package:foglm/features/candidates/data/vote_repository.dart';
+import 'package:foglm/features/candidates/application/usecase/cast_vote_usecase.dart';
 
 class CastVoteController extends AsyncNotifier<void> {
   @override
@@ -13,7 +13,7 @@ class CastVoteController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading<void>();
     state = await AsyncValue.guard(
-      () => ref.read(voteRepositoryProvider).castVote(photoId: photoId),
+      () => ref.read(castVoteUseCaseProvider).call(photoId: photoId),
     );
     if (!state.hasError) {
       // 得票数・自分の投票状態を反映させるため、候補一覧を再取得させる。
