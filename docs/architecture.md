@@ -67,13 +67,35 @@ domainが最も内側にあり、何にも依存しない。data はdomainのint
 - **UI向けに整形したデータを流すproviderはapplication層に置く**。data層に置かない(例: `today_candidates_provider.dart` は `data/` ではなく `application/` に置く。現状の逸脱は#245で是正)。
 - **Controller自身がAsyncNotifierProviderとして公開されるproviderもapplication層に置く**。
 
-## 5. 関連ドキュメントとの関係
+## 5. UseCase導入パターンの具体例(album feature)
+
+`album` featureで確立したパターンを以降のfeatureの雛形とする。
+
+```
+lib/features/album/
+  application/
+    album_provider.dart          … UI向けFutureProvider。UseCaseを呼ぶ
+    usecase/
+      get_album_usecase.dart          … class GetAlbumUseCase { call(...) }
+      get_developing_count_usecase.dart
+  domain/
+    album_photo.dart             … エンティティ
+    album_repository.dart        … Repositoryの抽象interface(dataから移動)
+  data/
+    album_repository.dart        … SupabaseAlbumRepository(interfaceを実装)
+```
+
+- UseCaseは`call({...})`という1メソッドのクラスとして書く。単純な委譲(Repositoryの1メソッドをそのまま呼ぶだけ)でも省略しない。
+- UseCaseのproviderはUseCaseと同じファイルに置き、Repository providerを`ref.watch()`で注入する(4章参照)。
+- テストは「UseCase自体のunit test(Repositoryをモック)」と「UseCaseを呼ぶ側(Controller/provider)のunit test(UseCaseをモック)」を分けて書く(`test/unit/get_album_usecase_test.dart`, `test/unit/album_provider_test.dart`参照)。
+
+## 6. 関連ドキュメントとの関係
 
 - `docs/api-flows.md`(#220でマージ予定。マージまでは[`docs/spec.md`の6章](./spec.md#6-api仕様supabase-rpc--edge-functions)を参照): クライアントとバックエンド間の**通信経路**(Auth API / Edge Function / RPC / 直接テーブル / Realtime)をどう選ぶかを定める。本ドキュメントはクライアント内部の**層構成**を定めるもので、扱う領域が異なる。data層のRepository実装がapi-flows.mdの規約に従って通信経路を選ぶ、という関係にある。
 - [`docs/testing-policy.md`](./testing-policy.md): 主要ロジックのテスト観点を定める。UseCase・domainのロジックはこのドキュメントの方針に従ってテストする。
 - [`docs/spec.md`](./spec.md): 「何を」提供するかの仕様。本ドキュメントは「どう」実装するかを定める。
 
-## 6. 子issue
+## 7. 子issue
 
 - [ ] #245 ディレクトリ構成をレイヤ規約に揃える(機械的な移動のみ)
 - [ ] #216 UseCase層の導入と、Controllerからの呼び出しへの置換
