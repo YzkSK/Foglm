@@ -1,3 +1,4 @@
+import { Image } from "https://deno.land/x/imagescript@1.2.17/mod.ts";
 import { CACHE_REFRESH_BUFFER_SECONDS } from "../_shared/photo-cache.ts";
 
 const SUPPORTED_IMAGE_TYPES: Record<string, string> = {
@@ -36,6 +37,64 @@ export function cacheControlForPhotoVariant(variant: PhotoVariant): string {
     return ORIGINAL_CACHE_CONTROL_SECONDS;
   }
   return BLURRED_CACHE_CONTROL_SECONDS;
+}
+
+// 単純なボックスブラー(水平・垂直の2パス)。imagescriptにblur APIが無いため自前実装する。
+function applyBoxBlur(
+  bitmap: Uint8ClampedArray,
+  width: number,
+  height: number,
+  radius: number,
+): void {
+  const channels = 4;
+  const temp = new Uint8ClampedArray(bitmap.length);
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      for (let c = 0; c < channels; c++) {
+        let sum = 0;
+        let count = 0;
+        for (let dx = -radius; dx <= radius; dx++) {
+          const sx = x + dx;
+          if (sx < 0 || sx >= width) continue;
+          sum += bitmap[(y * width + sx) * channels + c];
+          count++;
+        }
+        temp[(y * width + x) * channels + c] = sum / count;
+      }
+    }
+  }
+
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      for (let c = 0; c < channels; c++) {
+        let sum = 0;
+        let count = 0;
+        for (let dy = -radius; dy <= radius; dy++) {
+          const sy = y + dy;
+          if (sy < 0 || sy >= height) continue;
+          sum += temp[(sy * width + x) * channels + c];
+          count++;
+        }
+        bitmap[(y * width + x) * channels + c] = sum / count;
+      }
+    }
+  }
+}
+
+// 原本を復元不可能な程度まで縮小・ぼかしたJPEGを生成する(仕様書 8.1参照)。
+// Supabase Edge RuntimeのARM64環境ではネイティブ依存を持つsharpがロードできないため、
+// 純粋なTypeScript実装のimagescriptで縮小・エンコードし、ぼかしは自前のボックスブラーで行う。
+export async function createBlurredJpeg(
+  originalBytes: Uint8Array,
+  width: number,
+  blurRadius: number,
+  quality: number,
+): Promise<Uint8Array> {
+  const image = await Image.decode(originalBytes);
+  image.resize(width, Image.RESIZE_AUTO);
+  applyBoxBlur(image.bitmap, image.width, image.height, blurRadius);
+  return await image.encodeJPEG(quality);
 }
 
 export interface PhotoInsertErrorMapping {

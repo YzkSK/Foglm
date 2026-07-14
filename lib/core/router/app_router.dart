@@ -7,6 +7,7 @@ import 'package:foglm/features/auth/data/auth_state_listener.dart';
 import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/delete_account_confirm_screen.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
+import 'package:foglm/features/auth/presentation/initial_profile_setup_screen.dart';
 import 'package:foglm/features/auth/presentation/login_screen.dart';
 import 'package:foglm/features/auth/presentation/password_reset_request_screen.dart';
 import 'package:foglm/features/auth/presentation/profile_edit_screen.dart';
@@ -63,7 +64,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (authRedirect != null) {
         return authRedirect;
       }
-      return emailVerificationRedirect(
+      final verificationRedirect = emailVerificationRedirect(
+        user: user,
+        location: state.matchedLocation,
+      );
+      if (verificationRedirect != null) {
+        return verificationRedirect;
+      }
+      return profileSetupRedirect(
         user: user,
         location: state.matchedLocation,
       );
@@ -127,6 +135,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileEditScreen(),
+      ),
+
+      GoRoute(
+        path: '/profile/setup',
+        builder: (context, state) => const InitialProfileSetupScreen(),
       ),
 
       GoRoute(

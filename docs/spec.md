@@ -377,6 +377,8 @@ S01 ログイン
 
 ## 6. API仕様（Supabase RPC / Edge Functions）
 
+> この章は「**何を**提供するか」（仕様）を定める。実装が実際にどの経路（Edge Function / RPC / 直接テーブル / Auth API / Realtime）で動いているか、および新規実装でどの経路を選ぶべきかの規約は [api-flows.md](./api-flows.md) を参照。
+
 ### 6.1 認証関連
 | API | 種別 | 概要 |
 |---|---|---|

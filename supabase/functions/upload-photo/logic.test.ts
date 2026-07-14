@@ -1,7 +1,9 @@
 import { assertEquals } from "jsr:@std/assert@1";
+import { Image } from "https://deno.land/x/imagescript@1.2.17/mod.ts";
 import {
   buildStoragePath,
   cacheControlForPhotoVariant,
+  createBlurredJpeg,
   extensionForImageType,
   isSupportedImageType,
   mapPhotoInsertError,
@@ -71,4 +73,34 @@ Deno.test("takenDateInAsiaTokyo converts UTC midnight to the same JST day", () =
 Deno.test("takenDateInAsiaTokyo rolls over to the next JST day near midnight UTC", () => {
   // 2026-07-10T15:30:00Z は JST では 2026-07-11T00:30:00 (翌日)
   assertEquals(takenDateInAsiaTokyo("2026-07-10T15:30:00Z"), "2026-07-11");
+});
+
+Deno.test("createBlurredJpeg resizes to the given width and returns a decodable JPEG", async () => {
+  const source = new Image(64, 64);
+  source.fill(0xff0000ff);
+  const originalBytes = await source.encodeJPEG(90);
+
+  const blurredBytes = await createBlurredJpeg(originalBytes, 32, 12, 60);
+
+  const decoded = await Image.decode(blurredBytes);
+  assertEquals(decoded.width, 32);
+  assertEquals(decoded.height, 32);
+});
+
+Deno.test("createBlurredJpeg blends a hard black/white edge so it can't be reconstructed", async () => {
+  const source = new Image(64, 64);
+  for (let y = 0; y < 64; y++) {
+    for (let x = 0; x < 64; x++) {
+      source.setPixelAt(x + 1, y + 1, x < 32 ? 0x000000ff : 0xffffffff);
+    }
+  }
+  const originalBytes = await source.encodeJPEG(90);
+
+  const blurredBytes = await createBlurredJpeg(originalBytes, 32, 12, 60);
+
+  const decoded = await Image.decode(blurredBytes);
+  const boundaryPixel = decoded.getPixelAt(16, 16);
+  const r = (boundaryPixel >> 24) & 0xff;
+  // 境界のピクセルは純粋な黒(0x00)にも白(0xff)にもならず、周囲と混ざっているはず
+  assertEquals(r > 0x10 && r < 0xf0, true);
 });
