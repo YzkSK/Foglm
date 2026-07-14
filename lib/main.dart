@@ -8,12 +8,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Env.supabaseUrl.isNotEmpty && Env.supabaseAnonKey.isNotEmpty) {
-    await Supabase.initialize(
-      url: Env.supabaseUrl,
-      publishableKey: Env.supabaseAnonKey,
+  // 環境変数未設定のまま初期化をスキップして起動すると、全機能が原因不明の
+  // エラーになるまで気付けない(#207参照)。ここで明示的に落として検知する。
+  if (!Env.isConfigured) {
+    throw StateError(
+      'Supabaseの環境変数が設定されていません。 '
+      '--dart-define-from-file=dart_define.json を指定してビルドしてください '
+      '(docs/setup/secrets.md参照)。',
     );
   }
+  await Supabase.initialize(
+    url: Env.supabaseUrl,
+    publishableKey: Env.supabaseAnonKey,
+  );
 
   await PushNotificationService.initialize();
 

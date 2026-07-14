@@ -13,4 +13,9 @@ class Env {
 
   /// devプロファイルでビルド・実行されているかどうか。
   static bool get isDevProfile => appProfile == 'dev';
+
+  /// Supabase接続に必要な環境変数が両方とも設定されているかどうか。
+  /// falseの場合、`main.dart`は初期化をスキップせず明示的に落ちる(#207参照)。
+  static bool get isConfigured =>
+      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 }
