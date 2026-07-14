@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:foglm/features/groups/data/group_repository.dart';
+import 'package:foglm/features/groups/application/usecase/create_group_usecase.dart';
 
 class CreateGroupController extends AsyncNotifier<void> {
   @override
@@ -9,7 +9,7 @@ class CreateGroupController extends AsyncNotifier<void> {
   Future<void> submit({required String name}) async {
     state = const AsyncLoading<void>();
     state = await AsyncValue.guard(
-      () => ref.read(groupRepositoryProvider).createGroup(name: name),
+      () => ref.read(createGroupUseCaseProvider).call(name: name),
     );
   }
 }

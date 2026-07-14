@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/features/groups/data/group_repository.dart';
+import 'package:foglm/features/groups/domain/group_repository.dart';
 import 'package:foglm/features/groups/presentation/invite_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
