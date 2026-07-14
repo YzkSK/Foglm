@@ -14,7 +14,7 @@ import 'package:foglm/features/auth/presentation/reset_password_screen.dart';
 import 'package:foglm/features/auth/presentation/settings_screen.dart';
 import 'package:foglm/features/auth/presentation/sign_up_screen.dart';
 
-import 'package:foglm/features/camera/camera_screen.dart';
+import 'package:foglm/features/camera/presentation/camera_screen.dart';
 import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
 import 'package:foglm/features/debug/presentation/debug_menu_screen.dart';
 import 'package:foglm/features/groups/presentation/create_event_group_screen.dart';

@@ -6,9 +6,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/camera/application/remaining_shots_provider.dart';
 import 'package:foglm/features/camera/application/upload_photo_controller.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
-import 'package:foglm/features/camera/remaining_shots_provider.dart';
 import 'package:foglm/features/camera/widgets/shutter_button.dart';
 
 /// `/camera`ルートの`extra`として渡す引数。
