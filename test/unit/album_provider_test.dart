@@ -3,13 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foglm/features/album/application/album_provider.dart';
 import 'package:foglm/features/album/application/usecase/get_album_usecase.dart';
 import 'package:foglm/features/album/application/usecase/get_developing_count_usecase.dart';
+import 'package:foglm/features/album/data/album_repository.dart';
 import 'package:foglm/features/album/domain/album_photo.dart';
+import 'package:foglm/features/album/domain/album_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockGetAlbumUseCase extends Mock implements GetAlbumUseCase {}
 
 class MockGetDevelopingCountUseCase extends Mock
     implements GetDevelopingCountUseCase {}
+
+class MockAlbumRepository extends Mock implements AlbumRepository {}
 
 void main() {
   late MockGetAlbumUseCase getAlbumUseCase;
@@ -109,5 +113,49 @@ void main() {
         isTrue,
       );
     });
+  });
+
+  group('default wiring', () {
+    test(
+      'albumProvider uses the repository through the default usecase '
+      'provider',
+      () async {
+        final repository = MockAlbumRepository();
+        final wiredContainer = ProviderContainer(
+          overrides: [albumRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(wiredContainer.dispose);
+
+        when(
+          () => repository.getAlbum(groupId: 'group-1'),
+        ).thenAnswer((_) async => []);
+
+        await wiredContainer.read(albumProvider('group-1').future);
+
+        verify(() => repository.getAlbum(groupId: 'group-1')).called(1);
+      },
+    );
+
+    test(
+      'developingCountProvider uses the repository through the default '
+      'usecase provider',
+      () async {
+        final repository = MockAlbumRepository();
+        final wiredContainer = ProviderContainer(
+          overrides: [albumRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(wiredContainer.dispose);
+
+        when(
+          () => repository.getDevelopingCount(groupId: 'group-1'),
+        ).thenAnswer((_) async => 0);
+
+        await wiredContainer.read(developingCountProvider('group-1').future);
+
+        verify(
+          () => repository.getDevelopingCount(groupId: 'group-1'),
+        ).called(1);
+      },
+    );
   });
 }

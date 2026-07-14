@@ -4,6 +4,12 @@ import 'package:foglm/features/album/domain/album_photo.dart';
 import 'package:foglm/features/album/domain/album_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// 現像待ち(まだ現像されていない)とみなす`photos.status`の一覧
+/// (仕様書 3.6/3.8 `get_developing_count`参照)。その日撮影されたばかりで
+/// まだ投票結果が出ていない写真(pending_vote)も、ランダム現像待ちの写真
+/// (waiting_random)も、どちらもまだ現像されていない点では同じため含める。
+const _developingStatuses = ['pending_vote', 'waiting_random'];
+
 class SupabaseAlbumRepository implements AlbumRepository {
   SupabaseAlbumRepository(this._client);
 
@@ -29,7 +35,7 @@ class SupabaseAlbumRepository implements AlbumRepository {
         .from('photos')
         .count()
         .eq('group_id', groupId)
-        .inFilter('status', developingStatuses);
+        .inFilter('status', _developingStatuses);
   }
 }
 
