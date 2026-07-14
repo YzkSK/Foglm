@@ -170,4 +170,26 @@ void main() {
       verify(() => repository.updateFcmToken('token-abc')).called(1);
     },
   );
+
+  test(
+    'authStateListenerProvider propagates a Supabase client '
+    'initialization failure instead of swallowing it (#207)',
+    () {
+      final brokenContainer = ProviderContainer(
+        overrides: [
+          supabaseClientProvider.overrideWith((ref) {
+            throw StateError('Supabase is not initialized');
+          }),
+        ],
+      );
+      addTearDown(brokenContainer.dispose);
+
+      expect(
+        () => brokenContainer.read(authStateListenerProvider),
+        throwsA(
+          predicate((e) => e.toString().contains('not initialized')),
+        ),
+      );
+    },
+  );
 }

@@ -116,14 +116,11 @@ class AuthStateListener {
 }
 
 /// Supabase未初期化の環境(テスト等)では`supabaseClientProvider`が同期的に
-/// 例外を投げるため、監視を開始せず`null`を返す。
+/// 例外を投げる。以前はここで握り潰して`null`を返していたが、本番ビルドでも
+/// 同じ経路を通り認証状態の監視が黙って無効化されてしまうため撤廃した
+/// (#207参照)。テストではこのprovider自体を明示的にoverrideすること。
 final authStateListenerProvider = Provider<AuthStateListener?>((ref) {
-  final SupabaseClient client;
-  try {
-    client = ref.watch(supabaseClientProvider);
-  } on Object {
-    return null;
-  }
+  final client = ref.watch(supabaseClientProvider);
   final listener = AuthStateListener(ref, client);
   ref.onDispose(listener.dispose);
   return listener;

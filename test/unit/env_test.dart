@@ -10,4 +10,14 @@ void main() {
       expect(Env.isDevProfile, isFalse);
     });
   });
+
+  group('Env.isConfigured', () {
+    test('is false when SUPABASE_URL/SUPABASE_ANON_KEY are not set', () {
+      // テスト実行時は--dart-defineを渡していないため両方とも空文字列になり、
+      // isConfiguredはfalseになる(#207: fail-fast判定の対象)。
+      expect(Env.supabaseUrl, isEmpty);
+      expect(Env.supabaseAnonKey, isEmpty);
+      expect(Env.isConfigured, isFalse);
+    });
+  });
 }
