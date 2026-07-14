@@ -66,7 +66,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         '利用可能なカメラが見つかりません',
       );
     }
-    final controller = CameraController(cameras.first, ResolutionPreset.high);
+    final controller = CameraController(
+      cameras.first,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
     _controller = controller;
     await controller.initialize();
   }
