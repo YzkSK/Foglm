@@ -230,7 +230,12 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
           return Stack(
             fit: StackFit.expand,
             children: [
-              CameraPreview(_controller!),
+              Center(
+                child: AspectRatio(
+                  aspectRatio: _controller!.value.aspectRatio,
+                  child: CameraPreview(_controller!),
+                ),
+              ),
               Positioned(
                 top: 48,
                 right: 24,
