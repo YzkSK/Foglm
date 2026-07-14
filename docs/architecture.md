@@ -25,9 +25,9 @@ lib/features/<feature>/
 | 層 | 責務 | 知ってよいもの |
 |---|---|---|
 | **presentation** | 画面・Widget。ユーザー操作を受け取り、Controllerの状態を描画する | application層(Controllerの状態・メソッド) |
-| **application** | Controller(AsyncNotifier)がUI向けの状態を保持し、UseCaseを呼び出して結果を反映する。UseCaseは複数Repositoryをまたぐ処理・業務ルールの適用を行う | domain層(エンティティ、Repository抽象interface) |
+| **application** | Controller(AsyncNotifier)がUI向けの状態を保持し、UseCaseを呼び出して結果を反映する。UseCaseはUI操作単位のapplication service(単純なCRUDではRepositoryへの薄い委譲でよく、複数Repositoryをまたぐ処理・業務ルールの適用はUseCaseに寄せる) | domain層(エンティティ、Repository抽象interface)。providerの配線(wiring)に限り、実装を束ねるためdata層のRepository providerを参照してよい |
 | **domain** | エンティティ、値オブジェクト、失敗型(`*Failure`)、Repositoryの抽象interface。フレームワーク・I/Oに依存しない純粋なDart | 何にも依存しない(最も内側) |
-| **data** | Repositoryの実装。Supabase(Postgres/Auth/Storage/Edge Function)など外部I/Oを担う | domain層(実装するinterface) |
+| **data** | Repositoryの実装。Supabase(Postgres/Auth/Storage/Edge Function)など外部I/Oを担う | domain層(実装するinterface)、および`core/`配下の共通インフラ・外部SDK(`supabase_flutter`等) |
 
 Widgetのうち、特定のScreenに属さず複数箇所から再利用される部品は `presentation/` ではなく feature直下の `widgets/` に置いてよい(例: `auth/widgets/logout_button.dart`)。`widgets/` は presentation層の一部として扱い、依存ルールも同様に適用する。
 
@@ -45,6 +45,7 @@ domainが最も内側にあり、何にも依存しない。data はdomainのint
 - feature をまたぐ data のimport禁止(feature間はapplication層以上を経由する)
 - domain から他のどの層への依存も禁止(domain以外の層を一切importしない)
 - Controller が Repository を直接importすることを禁止し、UseCase経由を必須とする(#216完了後に適用。それまでの既存コードはこの禁止の適用対象外)
+- 例外: UseCase・ControllerのproviderがRepository providerを注入するための配線(`ref.watch(xxxRepositoryProvider)`)に限り、application層からdata層のRepository providerをimportしてよい。ビジネスロジックでの直接呼び出しは対象外(上記の禁止を参照)
 
 これらは #217 で `custom_lint` により機械的に強制する。それまでは本ドキュメントを規約として運用する。
 
@@ -68,7 +69,7 @@ domainが最も内側にあり、何にも依存しない。data はdomainのint
 
 ## 5. 関連ドキュメントとの関係
 
-- [`docs/api-flows.md`](./api-flows.md): クライアントとバックエンド間の**通信経路**(Auth API / Edge Function / RPC / 直接テーブル / Realtime)をどう選ぶかを定める。本ドキュメントはクライアント内部の**層構成**を定めるもので、扱う領域が異なる。data層のRepository実装がapi-flows.mdの規約に従って通信経路を選ぶ、という関係にある。
+- `docs/api-flows.md`(#220でマージ予定。マージまでは[`docs/spec.md`の6章](./spec.md#6-api仕様supabase-rpc--edge-functions)を参照): クライアントとバックエンド間の**通信経路**(Auth API / Edge Function / RPC / 直接テーブル / Realtime)をどう選ぶかを定める。本ドキュメントはクライアント内部の**層構成**を定めるもので、扱う領域が異なる。data層のRepository実装がapi-flows.mdの規約に従って通信経路を選ぶ、という関係にある。
 - [`docs/testing-policy.md`](./testing-policy.md): 主要ロジックのテスト観点を定める。UseCase・domainのロジックはこのドキュメントの方針に従ってテストする。
 - [`docs/spec.md`](./spec.md): 「何を」提供するかの仕様。本ドキュメントは「どう」実装するかを定める。
 
