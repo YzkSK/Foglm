@@ -89,6 +89,10 @@ class _GroupListBody extends StatelessWidget {
           ...otherGroups.map(
             (group) => Card(
               child: ListTile(
+                // アーカイブ済みグループは撮影できないため、タップでの
+                // カメラ画面遷移を無効化する(閲覧・招待・脱退は可能なまま
+                // にする。仕様書 3.2.1/3.11参照)。
+                enabled: group.status != 'archived',
                 title: Text(group.name),
                 subtitle: Text(_groupSubtitle(group)),
                 onTap: () => context.go(
