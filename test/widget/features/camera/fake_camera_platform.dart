@@ -9,11 +9,17 @@ import 'package:flutter/widgets.dart';
 /// 実機のカメラプラグインを使わずに`CameraController`の初期化・撮影を
 /// 完了させ、`takePicture()`が返す画像データを差し替えられるようにする。
 class FakeCameraPlatform extends CameraPlatform {
-  FakeCameraPlatform({Uint8List? capturedImageBytes})
-    : capturedImageBytes = capturedImageBytes ?? Uint8List.fromList([1, 2, 3]);
+  FakeCameraPlatform({
+    Uint8List? capturedImageBytes,
+    this.createCameraError,
+  }) : capturedImageBytes = capturedImageBytes ?? Uint8List.fromList([1, 2, 3]);
 
   /// `takePicture()`が返す画像データ。
   Uint8List capturedImageBytes;
+
+  /// 設定されている間、`createCameraWithSettings()`はこの値を投げる
+  /// (カメラ初期化失敗・再試行のシナリオをテストするために使う)。
+  Exception? createCameraError;
 
   @override
   Future<List<CameraDescription>> availableCameras() async {
@@ -31,6 +37,10 @@ class FakeCameraPlatform extends CameraPlatform {
     CameraDescription description,
     MediaSettings? settings,
   ) async {
+    final error = createCameraError;
+    if (error != null) {
+      throw error;
+    }
     return 1;
   }
 

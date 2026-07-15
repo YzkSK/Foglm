@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:camera/camera.dart';
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -225,6 +226,52 @@ void main() {
         find.byType(FloatingActionButton),
       );
       expect(shutterButton.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'shows a settings button when camera access is denied',
+    (tester) async {
+      CameraPlatform.instance = FakeCameraPlatform(
+        createCameraError: CameraException(
+          'CameraAccessDenied',
+          'Camera access permission was denied.',
+        ),
+      );
+
+      await tester.pumpWidget(pumpApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text('カメラへのアクセスが許可されていません'), findsOneWidget);
+      expect(find.text('設定を開く'), findsOneWidget);
+      expect(find.text('再試行'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'shows a retry button for non-permission failures, and retrying '
+    'recovers once the underlying cause is resolved',
+    (tester) async {
+      final fakePlatform = FakeCameraPlatform(
+        createCameraError: CameraException(
+          'cameraNotFound',
+          'No camera available.',
+        ),
+      );
+      CameraPlatform.instance = fakePlatform;
+
+      await tester.pumpWidget(pumpApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text('カメラを利用できません'), findsOneWidget);
+      expect(find.text('再試行'), findsOneWidget);
+      expect(find.text('設定を開く'), findsNothing);
+
+      fakePlatform.createCameraError = null;
+      await tester.tap(find.text('再試行'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CameraPreview), findsOneWidget);
     },
   );
 
