@@ -63,6 +63,16 @@ void main() {
           builder: (context, state) =>
               const Scaffold(body: Text('イベントグループ作成画面プレースホルダー')),
         ),
+        GoRoute(
+          path: '/groups/invite',
+          builder: (context, state) =>
+              const Scaffold(body: Text('招待画面プレースホルダー')),
+        ),
+        GoRoute(
+          path: '/groups/leave',
+          builder: (context, state) =>
+              const Scaffold(body: Text('脱退確認画面プレースホルダー')),
+        ),
       ],
     );
 
@@ -105,6 +115,44 @@ void main() {
 
     expect(find.text('カメラ画面プレースホルダー'), findsNothing);
   });
+
+  testWidgets('navigates to the camera screen for an active group', (
+    tester,
+  ) async {
+    await pumpScreen(tester, groups: [soloGroup, fixedGroup]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('固定グループA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('カメラ画面プレースホルダー'), findsOneWidget);
+  });
+
+  testWidgets(
+    'still allows inviting to an archived group',
+    (tester) async {
+      await pumpScreen(tester, groups: [soloGroup, archivedGroup]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('招待'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('招待画面プレースホルダー'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'still allows leaving an archived group',
+    (tester) async {
+      await pumpScreen(tester, groups: [soloGroup, archivedGroup]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('脱退'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('脱退確認画面プレースホルダー'), findsOneWidget);
+    },
+  );
 
   testWidgets('navigates to the create-group screen', (tester) async {
     await pumpScreen(tester, groups: [soloGroup]);
