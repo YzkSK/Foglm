@@ -174,4 +174,52 @@ void main() {
 
     expect(find.text('候補一覧の取得に失敗しました'), findsOneWidget);
   });
+
+  testWidgets('retries loading candidates when the retry button is tapped', (
+    tester,
+  ) async {
+    // Riverpod 3のデフォルト自動リトライにより失敗直後の呼び出し回数が
+    // 不定になるため、呼び出し回数ではなく最終的な表示状態で検証する。
+    var shouldSucceed = false;
+    when(
+      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+    ).thenAnswer((_) async {
+      if (!shouldSucceed) {
+        throw Exception('unexpected');
+      }
+      return const [];
+    });
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('候補一覧の取得に失敗しました'), findsOneWidget);
+
+    shouldSucceed = true;
+    await tester.tap(find.text('再読み込み'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('まだ候補写真がありません'), findsOneWidget);
+  });
+
+  testWidgets('reloads candidates on pull-to-refresh', (tester) async {
+    when(
+      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+    ).thenAnswer((_) async => []);
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+
+    await tester.fling(
+      find.byType(RefreshIndicator),
+      const Offset(0, 300),
+      1000,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+    ).called(2);
+  });
 }
