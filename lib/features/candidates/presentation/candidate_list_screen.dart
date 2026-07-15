@@ -137,7 +137,9 @@ class _CandidateTile extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: candidate.votedByMe
+      label: isVoting
+          ? '投票を送信中です'
+          : candidate.votedByMe
           ? '${candidate.voteCount}票、投票済み'
           : '${candidate.voteCount}票',
       onTap: enabled ? onTap : null,

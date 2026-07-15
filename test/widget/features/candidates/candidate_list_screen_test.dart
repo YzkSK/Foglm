@@ -147,6 +147,8 @@ void main() {
       final tiles = tester.widgetList<InkWell>(find.byType(InkWell)).toList();
       expect(tiles[0].onTap, isNull);
       expect(tiles[1].onTap, isNull);
+      // 投票中であることをスクリーンリーダーでも読み上げられるようにする。
+      expect(find.bySemanticsLabel('投票を送信中です'), findsOneWidget);
     },
   );
 
