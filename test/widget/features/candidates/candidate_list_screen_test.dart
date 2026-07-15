@@ -57,6 +57,33 @@ void main() {
     expect(find.text('2票'), findsOneWidget);
   });
 
+  testWidgets('exposes vote count and status via semantics', (tester) async {
+    when(
+      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+    ).thenAnswer(
+      (_) async => const [
+        CandidatePhotoRow(
+          id: 'photo-1',
+          blurredUrl: '',
+          voteCount: 3,
+          votedByMe: true,
+        ),
+        CandidatePhotoRow(
+          id: 'photo-2',
+          blurredUrl: '',
+          voteCount: 0,
+          votedByMe: false,
+        ),
+      ],
+    );
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('3票、投票済み'), findsOneWidget);
+    expect(find.bySemanticsLabel('0票'), findsOneWidget);
+  });
+
   testWidgets('tapping a candidate casts a vote for it', (tester) async {
     when(
       () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
