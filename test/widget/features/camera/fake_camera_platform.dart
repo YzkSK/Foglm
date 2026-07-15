@@ -21,6 +21,15 @@ class FakeCameraPlatform extends CameraPlatform {
   /// (カメラ初期化失敗・再試行のシナリオをテストするために使う)。
   Exception? createCameraError;
 
+  /// `createCameraWithSettings()`が呼ばれた回数(再試行の連打ガードなど、
+  /// カメラ初期化が意図した回数だけ行われることを検証するために使う)。
+  int createCameraCallCount = 0;
+
+  /// 設定されている間、`dispose()`はこのFutureが完了するまで待つ
+  /// (再試行の連打ガードのテストで、disposeの完了を意図的に保留し、
+  /// 2回目のタップが1回目の処理中に割り込むケースを再現するために使う)。
+  Future<void>? disposeGate;
+
   @override
   Future<List<CameraDescription>> availableCameras() async {
     return const [
@@ -37,6 +46,7 @@ class FakeCameraPlatform extends CameraPlatform {
     CameraDescription description,
     MediaSettings? settings,
   ) async {
+    createCameraCallCount++;
     final error = createCameraError;
     if (error != null) {
       throw error;
@@ -88,5 +98,10 @@ class FakeCameraPlatform extends CameraPlatform {
   }
 
   @override
-  Future<void> dispose(int cameraId) async {}
+  Future<void> dispose(int cameraId) async {
+    final gate = disposeGate;
+    if (gate != null) {
+      await gate;
+    }
+  }
 }

@@ -275,6 +275,43 @@ void main() {
     },
   );
 
+  testWidgets(
+    'ignores a second tap on retry while the first retry is still '
+    'disposing the previous controller',
+    (tester) async {
+      final fakePlatform = FakeCameraPlatform(
+        createCameraError: CameraException(
+          'cameraNotFound',
+          'No camera available.',
+        ),
+      );
+      CameraPlatform.instance = fakePlatform;
+
+      await tester.pumpWidget(pumpApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text('再試行'), findsOneWidget);
+      // initState()での最初の(失敗した)初期化で1回消費済み。
+      expect(fakePlatform.createCameraCallCount, 1);
+
+      fakePlatform.createCameraError = null;
+      // 1回目のdispose()を意図的に保留し、その完了待ちの間に2回目のタップが
+      // 割り込むケースを再現する。ガードが効いていれば、2回目のタップは
+      // 無視され、_initializeCamera()は1回しか追加で走らない。
+      final disposeCompleter = Completer<void>();
+      fakePlatform.disposeGate = disposeCompleter.future;
+
+      await tester.tap(find.text('再試行'));
+      await tester.tap(find.text('再試行'), warnIfMissed: false);
+
+      disposeCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CameraPreview), findsOneWidget);
+      expect(fakePlatform.createCameraCallCount, 2);
+    },
+  );
+
   testWidgets('ignores a second tap while the first capture is in flight', (
     tester,
   ) async {

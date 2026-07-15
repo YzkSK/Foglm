@@ -52,6 +52,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   // ローカルな減算量。remainingShotsProviderが新しい値を発行したら
   // (自分の撮影も含めて反映済みのはずなので)0に戻す。
   int _optimisticDecrement = 0;
+  // 「再試行」ボタンの連打による多重実行を防ぐガード。前回のcontrollerの
+  // dispose完了(非同期)からsetStateまでの間に再度呼ばれると、複数の
+  // _initializeCamera()が並行して_controller/_initializeControllerFutureを
+  // 奪い合うことになるため、_isCapturingと同様の考え方で連打を弾く。
+  bool _isRetrying = false;
 
   @override
   void initState() {
@@ -77,6 +82,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   // controllerが未初期化のままの可能性があるため、disposeも念のため
   // try-catchで包む)。
   Future<void> _retryInitializeCamera() async {
+    if (_isRetrying) {
+      return;
+    }
+    _isRetrying = true;
+
     final previousController = _controller;
     _controller = null;
     if (previousController != null) {
@@ -91,7 +101,13 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         );
       }
     }
+    // previousController.dispose()の非同期区間中にウィジェットが破棄され
+    // うるため、setState前にmountedを確認する。
+    if (!mounted) {
+      return;
+    }
     setState(() {
+      _isRetrying = false;
       _initializeControllerFuture = _initializeCamera();
     });
   }
