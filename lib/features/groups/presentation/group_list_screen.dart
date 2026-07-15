@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/widgets/retryable_error.dart';
 import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/groups/application/join_group_controller.dart';
 import 'package:foglm/features/groups/data/my_groups_provider.dart';
@@ -41,34 +42,12 @@ class GroupListScreen extends ConsumerWidget {
               error: error,
               stackTrace: stackTrace,
             );
-            return _RetryableError(
+            return RetryableError(
               message: 'グループ一覧の取得に失敗しました',
               onRetry: () => ref.invalidate(myGroupsProvider),
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-/// 取得失敗時に、原因メッセージと再読み込みボタンを表示する。
-class _RetryableError extends StatelessWidget {
-  const _RetryableError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(message),
-          const SizedBox(height: 12),
-          ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
-        ],
       ),
     );
   }

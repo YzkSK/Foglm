@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/widgets/retryable_error.dart';
 import 'package:foglm/features/candidates/application/cast_vote_controller.dart';
 import 'package:foglm/features/candidates/data/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
@@ -124,20 +125,10 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
               error: error,
               stackTrace: stackTrace,
             );
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('候補一覧の取得に失敗しました'),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => ref.invalidate(
-                      todayCandidatesProvider(widget.groupId),
-                    ),
-                    child: const Text('再読み込み'),
-                  ),
-                ],
-              ),
+            return RetryableError(
+              message: '候補一覧の取得に失敗しました',
+              onRetry: () =>
+                  ref.invalidate(todayCandidatesProvider(widget.groupId)),
             );
           },
         ),
