@@ -19,6 +19,9 @@ class ShutterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: _isEnabled ? onPressed : null,
+      // アイコンのみのボタンのため、tooltipでラベルを与える(無効時は
+      // 理由をスクリーンリーダーで読み上げられるようにする)。
+      tooltip: _isEnabled ? '撮影する' : '本日の撮影上限に達しました',
       backgroundColor: _isEnabled
           ? Theme.of(context).colorScheme.primary
           : Theme.of(context).disabledColor,

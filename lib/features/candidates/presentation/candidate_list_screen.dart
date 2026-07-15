@@ -132,81 +132,98 @@ class _CandidateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return InkWell(
+    // タイル内のテキスト・アイコンを個別に読み上げると断片的になるため、
+    // 1つのSemanticsノードにまとめて状態を読み上げられるようにする。
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: isVoting
+          ? '投票を送信中です'
+          : candidate.votedByMe
+          ? '${candidate.voteCount}票、投票済み'
+          : '${candidate.voteCount}票',
       onTap: enabled ? onTap : null,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: candidate.votedByMe
-                ? colorScheme.primary
-                : colorScheme.outlineVariant,
-            width: candidate.votedByMe ? 3 : 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (candidate.blurredUrl.isEmpty)
-              const ColoredBox(
-                color: Colors.black12,
-                child: Icon(Icons.broken_image_outlined),
-              )
-            else
-              Image.network(
-                candidate.blurredUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // 画像読み込み失敗を握り潰さず記録する。
-                  developer.log(
-                    'failed to load candidate image for photo '
-                    '${candidate.id}',
-                    name: 'CandidateListScreen',
-                    error: error,
-                    stackTrace: stackTrace,
-                  );
-                  return const ColoredBox(
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: candidate.votedByMe
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
+                width: candidate.votedByMe ? 3 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (candidate.blurredUrl.isEmpty)
+                  const ColoredBox(
                     color: Colors.black12,
                     child: Icon(Icons.broken_image_outlined),
-                  );
-                },
-              ),
-            Positioned(
-              right: 4,
-              bottom: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
+                  )
+                else
+                  Image.network(
+                    candidate.blurredUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // 画像読み込み失敗を握り潰さず記録する。
+                      developer.log(
+                        'failed to load candidate image for photo '
+                        '${candidate.id}',
+                        name: 'CandidateListScreen',
+                        error: error,
+                        stackTrace: stackTrace,
+                      );
+                      return const ColoredBox(
+                        color: Colors.black12,
+                        child: Icon(Icons.broken_image_outlined),
+                      );
+                    },
+                  ),
+                Positioned(
+                  right: 4,
+                  bottom: 4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${candidate.voteCount}票',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${candidate.voteCount}票',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
+                if (candidate.votedByMe)
+                  Positioned(
+                    left: 4,
+                    top: 4,
+                    child: Icon(
+                      Icons.check_circle,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                if (isVoting)
+                  const ColoredBox(
+                    color: Colors.black38,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
-            if (candidate.votedByMe)
-              Positioned(
-                left: 4,
-                top: 4,
-                child: Icon(
-                  Icons.check_circle,
-                  color: colorScheme.primary,
-                ),
-              ),
-            if (isVoting)
-              const ColoredBox(
-                color: Colors.black38,
-                child: Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
