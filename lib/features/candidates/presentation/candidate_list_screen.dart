@@ -36,7 +36,30 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
   // どの写真に投票しようとしたのか分からなくなるため)。
   String? _votingPhotoId;
 
-  Future<void> _vote(String photoId) async {
+  Future<void> _confirmAndVote(String photoId) async {
+    // スクロール中の誤タップがそのまま投票にならないよう、実際に送信する
+    // 前に確認ダイアログを挟む(拡大表示(S08、#23)実装までの暫定対応)。
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('投票の確認'),
+        content: const Text('この写真に投票しますか?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('投票する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
     setState(() => _votingPhotoId = photoId);
     try {
       await ref
@@ -93,7 +116,7 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
                   candidate: candidate,
                   enabled: !isVoting,
                   isVoting: _votingPhotoId == candidate.id,
-                  onTap: () => _vote(candidate.id),
+                  onTap: () => _confirmAndVote(candidate.id),
                 );
               },
             );

@@ -57,7 +57,63 @@ void main() {
     expect(find.text('2票'), findsOneWidget);
   });
 
-  testWidgets('tapping a candidate casts a vote for it', (tester) async {
+  testWidgets('tapping a candidate shows a confirmation dialog', (
+    tester,
+  ) async {
+    when(
+      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+    ).thenAnswer(
+      (_) async => const [
+        CandidatePhotoRow(
+          id: 'photo-1',
+          blurredUrl: '',
+          voteCount: 0,
+          votedByMe: false,
+        ),
+      ],
+    );
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(InkWell));
+    await tester.pumpAndSettle();
+
+    expect(find.text('この写真に投票しますか?'), findsOneWidget);
+    verifyNever(() => voteRepository.castVote(photoId: any(named: 'photoId')));
+  });
+
+  testWidgets('cancelling the confirmation dialog does not cast a vote', (
+    tester,
+  ) async {
+    when(
+      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+    ).thenAnswer(
+      (_) async => const [
+        CandidatePhotoRow(
+          id: 'photo-1',
+          blurredUrl: '',
+          voteCount: 0,
+          votedByMe: false,
+        ),
+      ],
+    );
+
+    await pumpScreen(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(InkWell));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('この写真に投票しますか?'), findsNothing);
+    verifyNever(() => voteRepository.castVote(photoId: any(named: 'photoId')));
+  });
+
+  testWidgets('confirming the dialog casts a vote for the candidate', (
+    tester,
+  ) async {
     when(
       () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
     ).thenAnswer(
@@ -78,6 +134,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(InkWell));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('投票する'));
     await tester.pumpAndSettle();
 
     verify(() => voteRepository.castVote(photoId: 'photo-1')).called(1);
@@ -113,6 +171,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.byType(InkWell).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('投票する'));
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -144,6 +204,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(InkWell));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('投票する'));
     await tester.pumpAndSettle();
 
     expect(find.text('投票に失敗しました。時間をおいて再度お試しください'), findsOneWidget);

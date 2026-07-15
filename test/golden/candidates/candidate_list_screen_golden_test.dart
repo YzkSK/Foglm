@@ -116,12 +116,44 @@ void main() {
 
   unawaited(
     goldenTest(
+      'CandidateListScreen shows a confirmation dialog when a tile is '
+      'tapped',
+      fileName: 'candidate_list_screen_confirm_dialog',
+      constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(InkWell).first);
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        final repository = _MockCandidateRepository();
+        when(
+          () => repository.getTodayCandidates(groupId: 'test-group-id'),
+        ).thenAnswer(
+          (_) async => const [
+            CandidatePhotoRow(
+              id: 'photo-1',
+              blurredUrl: '',
+              voteCount: 0,
+              votedByMe: false,
+            ),
+          ],
+        );
+        return _pumpApp(candidateRepository: repository);
+      },
+    ),
+  );
+
+  unawaited(
+    goldenTest(
       'CandidateListScreen shows a loading overlay only on the tapped tile',
       fileName: 'candidate_list_screen_voting',
       constraints: const BoxConstraints(maxWidth: 400, maxHeight: 800),
       pumpBeforeTest: (tester) async {
         await tester.pumpAndSettle();
         await tester.tap(find.byType(InkWell).first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('投票する'));
         await tester.pump();
       },
       builder: () {
