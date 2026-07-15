@@ -10,6 +10,7 @@ import 'package:foglm/features/camera/application/upload_photo_controller.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
 import 'package:foglm/features/camera/remaining_shots_provider.dart';
 import 'package:foglm/features/camera/widgets/shutter_button.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// `/camera`ルートの`extra`として渡す引数。
 class CameraArgs {
@@ -34,7 +35,7 @@ class CameraScreen extends ConsumerStatefulWidget {
 
 class _CameraScreenState extends ConsumerState<CameraScreen> {
   CameraController? _controller;
-  late final Future<void> _initializeControllerFuture;
+  late Future<void> _initializeControllerFuture;
   // takePicture()完了からuploadPhotoControllerProviderがローディング状態に
   // 遷移するまでの間はシャッターボタンがまだ操作可能なため、連打による
   // 二重撮影・二重送信を防ぐガードとして使う。
@@ -51,6 +52,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   // ローカルな減算量。remainingShotsProviderが新しい値を発行したら
   // (自分の撮影も含めて反映済みのはずなので)0に戻す。
   int _optimisticDecrement = 0;
+  // 「再試行」ボタンの連打による多重実行を防ぐガード。前回のcontrollerの
+  // dispose完了(非同期)からsetStateまでの間に再度呼ばれると、複数の
+  // _initializeCamera()が並行して_controller/_initializeControllerFutureを
+  // 奪い合うことになるため、_isCapturingと同様の考え方で連打を弾く。
+  bool _isRetrying = false;
 
   @override
   void initState() {
@@ -69,6 +75,41 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     final controller = CameraController(cameras.first, ResolutionPreset.high);
     _controller = controller;
     await controller.initialize();
+  }
+
+  // カメラ初期化失敗(権限拒否・カメラ非搭載・端末エラー等)からの再試行。
+  // 前回のcontrollerが残っていれば破棄してから作り直す(初期化失敗時は
+  // controllerが未初期化のままの可能性があるため、disposeも念のため
+  // try-catchで包む)。
+  Future<void> _retryInitializeCamera() async {
+    if (_isRetrying) {
+      return;
+    }
+    _isRetrying = true;
+
+    final previousController = _controller;
+    _controller = null;
+    if (previousController != null) {
+      try {
+        await previousController.dispose();
+      } on Object catch (e, stackTrace) {
+        developer.log(
+          'failed to dispose the previous CameraController before retry',
+          name: 'CameraScreen',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+    // previousController.dispose()の非同期区間中にウィジェットが破棄され
+    // うるため、setState前にmountedを確認する。
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isRetrying = false;
+      _initializeControllerFuture = _initializeCamera();
+    });
   }
 
   @override
@@ -219,11 +260,13 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
           }
 
           if (snapshot.hasError || _controller == null) {
-            return const Center(
-              child: Text(
-                'カメラを利用できません',
-                style: TextStyle(color: Colors.white),
-              ),
+            final error = snapshot.error;
+            final isPermissionDenied =
+                error is CameraException &&
+                error.code.startsWith('CameraAccessDenied');
+            return _CameraErrorView(
+              isPermissionDenied: isPermissionDenied,
+              onRetry: _retryInitializeCamera,
             );
           }
 
@@ -252,6 +295,50 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// カメラ初期化失敗時の表示。原因に応じて復帰導線を出し分ける
+/// (権限拒否なら設定アプリを開くボタン、それ以外なら再試行ボタン)。
+class _CameraErrorView extends StatelessWidget {
+  const _CameraErrorView({
+    required this.isPermissionDenied,
+    required this.onRetry,
+  });
+
+  final bool isPermissionDenied;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isPermissionDenied
+                  ? 'カメラへのアクセスが許可されていません'
+                  : 'カメラを利用できません',
+              style: const TextStyle(color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (isPermissionDenied)
+              ElevatedButton(
+                onPressed: () => unawaited(openAppSettings()),
+                child: const Text('設定を開く'),
+              )
+            else
+              ElevatedButton(
+                onPressed: () => unawaited(onRetry()),
+                child: const Text('再試行'),
+              ),
+          ],
+        ),
       ),
     );
   }
