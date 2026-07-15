@@ -1,3 +1,8 @@
+-- 注意(#209): 本ファイルは並行ブランチのマージ事故により、
+-- 20260707030001_restrict_groups_direct_insert.sql とSQL自体は同一内容(revoke insert on public.groups from authenticated;)で重複している。
+-- 適用済みマイグレーションの改変は履歴不整合のリスクがあるため、あえて修正せずそのまま残す。
+-- 詳細はdocs/setup/supabase.mdおよびissue #209を参照。
+--
 -- groups_insert_own(20260706010001)の列単位grantにより、認証済みユーザーはcreate_group関数の
 -- バリデーション(空文字/空白のみの名前拒否)を経由せずgroupsへ直接INSERTできてしまう。
 -- また直接INSERTした場合group_membersへの自動登録もスキップされ、

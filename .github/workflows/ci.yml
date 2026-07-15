@@ -56,6 +56,37 @@ jobs:
 
           exit $failed
 
+      - name: Check for duplicate migration suffix names against main
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin main --depth=1
+          main_files=$(git ls-tree -r --name-only origin/main -- supabase/migrations \
+            | grep -E '/[0-9]{14}_.*\.sql$')
+
+          new_files=$(comm -13 \
+            <(echo "$main_files" | sort) \
+            <(ls supabase/migrations | grep -E '^[0-9]{14}_.*\.sql$' \
+              | sed 's#^#supabase/migrations/#' | sort))
+
+          if [ -z "$new_files" ]; then
+            exit 0
+          fi
+
+          all_suffixes=$(ls supabase/migrations | grep -E '^[0-9]{14}_.*\.sql$' \
+            | sed -E 's/^[0-9]{14}_//')
+
+          failed=0
+          for f in $new_files; do
+            suffix=$(basename "$f" | sed -E 's/^[0-9]{14}_//')
+            count=$(echo "$all_suffixes" | grep -Fxc "$suffix")
+            if [ "$count" -gt 1 ]; then
+              echo "::error::$f と同じ内容を意図したマイグレーション(同名サフィックス '$suffix')が既に存在します。並行ブランチのマージ事故の可能性があるため、既存のマイグレーションと重複していないか確認してください。"
+              failed=1
+            fi
+          done
+
+          exit $failed
+
   flutter-ci:
     runs-on: ubuntu-latest
     steps:
