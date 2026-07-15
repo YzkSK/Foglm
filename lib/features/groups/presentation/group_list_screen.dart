@@ -28,7 +28,10 @@ class GroupListScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('グループ一覧')),
       body: SafeArea(
         child: groupsAsync.when(
-          data: (groups) => _GroupListBody(groups: groups),
+          data: (groups) => RefreshIndicator(
+            onRefresh: () => ref.refresh(myGroupsProvider.future),
+            child: _GroupListBody(groups: groups),
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) {
             // myGroupsProviderの取得失敗を握り潰さず記録する。
@@ -38,9 +41,34 @@ class GroupListScreen extends ConsumerWidget {
               error: error,
               stackTrace: stackTrace,
             );
-            return const Center(child: Text('グループ一覧の取得に失敗しました'));
+            return _RetryableError(
+              message: 'グループ一覧の取得に失敗しました',
+              onRetry: () => ref.invalidate(myGroupsProvider),
+            );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// 取得失敗時に、原因メッセージと再読み込みボタンを表示する。
+class _RetryableError extends StatelessWidget {
+  const _RetryableError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(message),
+          const SizedBox(height: 12),
+          ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
+        ],
       ),
     );
   }
@@ -65,6 +93,11 @@ class _GroupListBody extends StatelessWidget {
     final otherGroups = groups.where((g) => g.mode != 'solo').toList();
 
     return ListView(
+      // 一覧が画面に収まらない少数件数でも(空状態を含む)pull-to-refreshの
+      // ジェスチャーが効くようにする。デフォルトの物理挙動だとコンテンツが
+      // ビューポートより短い場合オーバースクロール通知が発生せず、
+      // RefreshIndicatorが反応しない。
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
         if (soloGroup != null)

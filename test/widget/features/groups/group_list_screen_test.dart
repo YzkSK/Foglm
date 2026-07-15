@@ -88,6 +88,75 @@ void main() {
     expect(find.text('参加しているグループはまだありません'), findsOneWidget);
   });
 
+  testWidgets('retries loading groups when the retry button is tapped', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/groups',
+      routes: [
+        GoRoute(
+          path: '/groups',
+          builder: (context, state) => const GroupListScreen(),
+        ),
+      ],
+    );
+    // Riverpod 3のデフォルト自動リトライにより失敗直後の呼び出し回数が
+    // 不定になるため、呼び出し回数ではなく最終的な表示状態で検証する。
+    var shouldSucceed = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupRepositoryProvider.overrideWithValue(repository),
+          myGroupsProvider.overrideWith((ref) async {
+            if (!shouldSucceed) {
+              throw Exception('unexpected');
+            }
+            return [soloGroup];
+          }),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('グループ一覧の取得に失敗しました'), findsOneWidget);
+
+    shouldSucceed = true;
+    await tester.tap(find.text('再読み込み'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('自分'), findsOneWidget);
+  });
+
+  testWidgets('reloads groups on pull-to-refresh', (tester) async {
+    var callCount = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupRepositoryProvider.overrideWithValue(repository),
+          myGroupsProvider.overrideWith((ref) async {
+            callCount++;
+            return [soloGroup];
+          }),
+        ],
+        child: const MaterialApp(home: GroupListScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.fling(
+      find.byType(RefreshIndicator),
+      const Offset(0, 300),
+      1000,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(callCount, 2);
+  });
+
   testWidgets('navigates to the create-group screen', (tester) async {
     await pumpScreen(tester, groups: [soloGroup]);
     await tester.pumpAndSettle();

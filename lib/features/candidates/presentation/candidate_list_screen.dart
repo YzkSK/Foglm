@@ -76,26 +76,43 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
       body: SafeArea(
         child: candidatesAsync.when(
           data: (candidates) {
-            if (candidates.isEmpty) {
-              return const Center(child: Text('まだ候補写真がありません'));
-            }
-            return GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+            return RefreshIndicator(
+              onRefresh: () => ref.refresh(
+                todayCandidatesProvider(widget.groupId).future,
               ),
-              itemCount: candidates.length,
-              itemBuilder: (context, index) {
-                final candidate = candidates[index];
-                return _CandidateTile(
-                  candidate: candidate,
-                  enabled: !isVoting,
-                  isVoting: _votingPhotoId == candidate.id,
-                  onTap: () => _vote(candidate.id),
-                );
-              },
+              child: candidates.isEmpty
+                  ? ListView(
+                      // 空状態でもpull-to-refreshのジェスチャーが効くように、
+                      // コンテンツがビューポートより短くても常にスクロール
+                      // 可能な物理挙動にする。
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(child: Text('まだ候補写真がありません')),
+                        ),
+                      ],
+                    )
+                  : GridView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(12),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                      itemCount: candidates.length,
+                      itemBuilder: (context, index) {
+                        final candidate = candidates[index];
+                        return _CandidateTile(
+                          candidate: candidate,
+                          enabled: !isVoting,
+                          isVoting: _votingPhotoId == candidate.id,
+                          onTap: () => _vote(candidate.id),
+                        );
+                      },
+                    ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -107,7 +124,21 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
               error: error,
               stackTrace: stackTrace,
             );
-            return const Center(child: Text('候補一覧の取得に失敗しました'));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('候補一覧の取得に失敗しました'),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(
+                      todayCandidatesProvider(widget.groupId),
+                    ),
+                    child: const Text('再読み込み'),
+                  ),
+                ],
+              ),
+            );
           },
         ),
       ),
