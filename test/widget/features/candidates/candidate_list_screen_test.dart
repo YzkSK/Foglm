@@ -111,6 +111,39 @@ void main() {
     verifyNever(() => voteRepository.castVote(photoId: any(named: 'photoId')));
   });
 
+  testWidgets(
+    'dismissing the confirmation dialog via the barrier does not cast a '
+    'vote',
+    (tester) async {
+      when(
+        () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
+      ).thenAnswer(
+        (_) async => const [
+          CandidatePhotoRow(
+            id: 'photo-1',
+            blurredUrl: '',
+            voteCount: 0,
+            votedByMe: false,
+          ),
+        ],
+      );
+
+      await pumpScreen(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(InkWell));
+      await tester.pumpAndSettle();
+      // ダイアログ外(バリア)をタップして閉じる。
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.text('この写真に投票しますか?'), findsNothing);
+      verifyNever(
+        () => voteRepository.castVote(photoId: any(named: 'photoId')),
+      );
+    },
+  );
+
   testWidgets('confirming the dialog casts a vote for the candidate', (
     tester,
   ) async {
