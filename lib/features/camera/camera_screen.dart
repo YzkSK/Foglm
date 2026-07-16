@@ -18,6 +18,19 @@ class CameraArgs {
   final String groupId;
 }
 
+/// 撮影に使うカメラを選ぶ(仕様書 4.1 S06参照)。
+///
+/// `availableCameras()`の並び順は端末・OS依存で背面カメラが先頭とは
+/// 限らないため、`CameraLensDirection.back`を明示的に選択する。
+/// 背面カメラを持たない端末では、利用可能な最初のカメラにフォールバック
+/// する。`cameras`は空でないことを呼び出し側が保証すること。
+CameraDescription selectPreferredCamera(List<CameraDescription> cameras) {
+  return cameras.firstWhere(
+    (c) => c.lensDirection == CameraLensDirection.back,
+    orElse: () => cameras.first,
+  );
+}
+
 /// カメラ撮影画面(S06)。
 ///
 /// 撮影の残り枚数を表示し、上限に達した場合はシャッターボタンを
@@ -66,7 +79,10 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         '利用可能なカメラが見つかりません',
       );
     }
-    final controller = CameraController(cameras.first, ResolutionPreset.high);
+    final controller = CameraController(
+      selectPreferredCamera(cameras),
+      ResolutionPreset.high,
+    );
     _controller = controller;
     await controller.initialize();
   }
