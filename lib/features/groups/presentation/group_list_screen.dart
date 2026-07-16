@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/features/camera/camera_screen.dart';
+import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
 import 'package:foglm/features/groups/application/join_group_controller.dart';
 import 'package:foglm/features/groups/data/my_groups_provider.dart';
 import 'package:foglm/features/groups/domain/my_group.dart';
@@ -25,7 +26,16 @@ class GroupListScreen extends ConsumerWidget {
     final groupsAsync = ref.watch(myGroupsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('グループ一覧')),
+      appBar: AppBar(
+        title: const Text('グループ一覧'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: '設定',
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: groupsAsync.when(
           data: (groups) => _GroupListBody(groups: groups),
@@ -73,7 +83,7 @@ class _GroupListBody extends StatelessWidget {
               leading: const Icon(Icons.person),
               title: const Text('自分'),
               subtitle: const Text('ソロモード'),
-              onTap: () => context.go(
+              onTap: () => context.push(
                 '/camera',
                 extra: CameraArgs(groupId: soloGroup.id),
               ),
@@ -91,13 +101,25 @@ class _GroupListBody extends StatelessWidget {
               child: ListTile(
                 title: Text(group.name),
                 subtitle: Text(_groupSubtitle(group)),
-                onTap: () => context.go(
+                onTap: () => context.push(
                   '/camera',
                   extra: CameraArgs(groupId: group.id),
                 ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+                // ボタンが3個になり、狭い画面幅・長いグループ名の組み合わせで
+                // Rowだとオーバーフローしうるため、折り返し可能なWrapにする。
+                trailing: Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
+                    TextButton(
+                      onPressed: () => context.push(
+                        '/candidates',
+                        extra: CandidateListArgs(groupId: group.id),
+                      ),
+                      child: const Text('候補'),
+                    ),
                     TextButton(
                       onPressed: () => context.push(
                         '/groups/invite',
@@ -125,12 +147,12 @@ class _GroupListBody extends StatelessWidget {
           ),
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: () => context.go('/groups/new'),
+          onPressed: () => context.push('/groups/new'),
           child: const Text('固定グループを作成'),
         ),
         const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () => context.go('/groups/new-event'),
+          onPressed: () => context.push('/groups/new-event'),
           child: const Text('イベントグループを作成'),
         ),
         const SizedBox(height: 8),

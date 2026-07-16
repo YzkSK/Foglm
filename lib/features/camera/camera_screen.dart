@@ -6,10 +6,13 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/core/router/camera_route_observer.dart';
 import 'package:foglm/features/camera/application/upload_photo_controller.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
 import 'package:foglm/features/camera/remaining_shots_provider.dart';
 import 'package:foglm/features/camera/widgets/shutter_button.dart';
+import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/camera`ルートの`extra`として渡す引数。
 class CameraArgs {
@@ -32,7 +35,7 @@ class CameraScreen extends ConsumerStatefulWidget {
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends ConsumerState<CameraScreen> {
+class _CameraScreenState extends ConsumerState<CameraScreen> with RouteAware {
   CameraController? _controller;
   late final Future<void> _initializeControllerFuture;
   // takePicture()完了からuploadPhotoControllerProviderがローディング状態に
@@ -72,7 +75,17 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    cameraScreenRouteObserver.subscribe(
+      this,
+      ModalRoute.of(context)! as PageRoute<void>,
+    );
+  }
+
+  @override
   void dispose() {
+    cameraScreenRouteObserver.unsubscribe(this);
     final controller = _controller;
     if (controller != null) {
       unawaited(controller.dispose());
@@ -80,9 +93,50 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
     super.dispose();
   }
 
+  // 候補一覧画面等がこの上にpushされ、カメラ画面が隠れたときに呼ばれる
+  // (issue #272レビュー対応)。隠れている間もカメラハードウェアを掴んだ
+  // ままにしないよう、プレビューを一時停止する。
+  @override
+  void didPushNext() {
+    unawaited(_setPreviewPaused(true));
+  }
+
+  // 候補一覧画面等から戻り、カメラ画面が再びトップになったときに呼ばれる。
+  @override
+  void didPopNext() {
+    unawaited(_setPreviewPaused(false));
+  }
+
+  Future<void> _setPreviewPaused(bool paused) async {
+    final controller = _controller;
+    if (controller == null) {
+      return;
+    }
+    try {
+      if (paused) {
+        await controller.pausePreview();
+      } else {
+        await controller.resumePreview();
+      }
+    } on Object catch (error, stackTrace) {
+      // 握り潰さず記録する。失敗してもプレビューが止まったまま/動いたまま
+      // になるだけで、他の機能(アップロード等)には影響しない。
+      developer.log(
+        'Failed to ${paused ? 'pause' : 'resume'} camera preview',
+        name: 'CameraScreen',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   Future<void> _onShutterPressed() async {
     final controller = _controller;
-    if (controller == null || _isCapturing) {
+    // このカメラ画面が候補一覧画面等の下に隠れている(pushで遷移済みの)
+    // 場合はシャッターを操作不可にする。連打による/candidatesへの
+    // 二重push等を防ぐ(issue #272レビュー対応)。
+    final isScreenActive = ModalRoute.of(context)?.isCurrent ?? false;
+    if (controller == null || _isCapturing || !isScreenActive) {
       return;
     }
     setState(() => _isCapturing = true);
@@ -114,15 +168,41 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
         return;
       }
       final uploadState = ref.read(uploadPhotoControllerProvider);
-      if (!uploadState.hasError) {
+      // アップロード中に閉じるボタン等でこの画面から離脱済みの場合、
+      // 離脱後にさらに候補一覧へ押し込む遷移はしない(issue #272レビュー
+      // 対応)。
+      final isStillActive = ModalRoute.of(context)?.isCurrent ?? false;
+      if (!uploadState.hasError && isStillActive) {
         // 自分のphotos INSERTがRealtimeで反映されるまでのラグの間、
         // 残数表示・シャッターの操作可否を楽観的に更新する。
         setState(() => _optimisticDecrement++);
+        // 撮影後は今日の候補一覧(S07)へ遷移する(仕様書 4.2画面遷移図
+        // 「S06 カメラ撮影 → 撮影後S07へ」参照)。pushにすることで、
+        // 候補一覧から戻ればこのカメラ画面に戻って連続撮影できる。
+        unawaited(_navigateToCandidates());
       }
     } finally {
       if (mounted) {
         setState(() => _isCapturing = false);
       }
+    }
+  }
+
+  Future<void> _navigateToCandidates() async {
+    try {
+      await context.push(
+        '/candidates',
+        extra: CandidateListArgs(groupId: widget.groupId),
+      );
+    } on Object catch (error, stackTrace) {
+      // 握り潰さず記録する。撮影・アップロード自体は既に成功済みのため、
+      // 遷移の失敗をユーザーへエラー扱いで見せる必要はない。
+      developer.log(
+        'Failed to navigate to the candidates screen',
+        name: 'CameraScreen',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -211,47 +291,65 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      // AppBarを敢えて使わず、カメラプレビューを画面いっぱいに表示する
+      // (仕様書 4.1 S06参照)。戻る導線は閉じるボタンとして重ねて表示する
+      // (カメラ初期化中・失敗時でも操作できるようFutureBuilderの外に置く)。
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          FutureBuilder<void>(
+            future: _initializeControllerFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (snapshot.hasError || _controller == null) {
-            return const Center(
-              child: Text(
-                'カメラを利用できません',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+              if (snapshot.hasError || _controller == null) {
+                return const Center(
+                  child: Text(
+                    'カメラを利用できません',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
+              }
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              CameraPreview(_controller!),
-              Positioned(
-                top: 48,
-                right: 24,
-                child: _RemainingShotsBadge(remaining: remaining),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  CameraPreview(_controller!),
+                  Positioned(
+                    top: 48,
+                    right: 24,
+                    child: _RemainingShotsBadge(remaining: remaining),
+                  ),
+                  Positioned(
+                    bottom: 32,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: isUploading
+                          ? const CircularProgressIndicator()
+                          : ShutterButton(
+                              remaining: remaining,
+                              onPressed: _onShutterPressed,
+                            ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                tooltip: '閉じる',
+                onPressed: () => context.pop(),
               ),
-              Positioned(
-                bottom: 32,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: isUploading
-                      ? const CircularProgressIndicator()
-                      : ShutterButton(
-                          remaining: remaining,
-                          onPressed: _onShutterPressed,
-                        ),
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ),
+        ],
       ),
     );
   }
