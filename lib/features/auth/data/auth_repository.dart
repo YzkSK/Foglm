@@ -40,6 +40,13 @@ abstract class AuthRepository {
   });
 
   Future<void> deleteAccount();
+
+  /// ログイン中の本人のFCMトークンを登録・更新する。サインアウト・退会時に
+  /// クリアする場合は`token`に`null`を渡す(#206参照)。
+  /// `users.fcm_token`は1ユーザー1トークンの設計のため、同一ユーザーが
+  /// 複数端末でログインしている場合は最後に登録した端末のみに通知が届く
+  /// (複数端末対応は本issueの範囲外)。
+  Future<void> updateFcmToken(String? token);
 }
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -191,6 +198,14 @@ class SupabaseAuthRepository implements AuthRepository {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  @override
+  Future<void> updateFcmToken(String? token) async {
+    await _client
+        .from('users')
+        .update({'fcm_token': token})
+        .eq('id', _client.auth.currentUser!.id);
   }
 }
 
