@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/core/widgets/form_status_text.dart';
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
 import 'package:foglm/features/auth/application/sign_in_controller.dart';
 import 'package:foglm/features/auth/application/sign_out_controller.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/domain/sign_in_failure.dart';
 import 'package:foglm/features/auth/domain/validators.dart';
 import 'package:go_router/go_router.dart';

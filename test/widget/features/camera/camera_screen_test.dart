@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:foglm/features/camera/camera_screen.dart';
 import 'package:foglm/features/camera/data/photo_repository.dart';
 import 'package:foglm/features/camera/data/remaining_shots_repository.dart';
 import 'package:foglm/features/camera/domain/upload_photo_failure.dart';
+import 'package:foglm/features/camera/presentation/camera_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'fake_camera_platform.dart';

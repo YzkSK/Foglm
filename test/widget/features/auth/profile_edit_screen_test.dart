@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
+import 'package:foglm/features/auth/application/my_profile_provider.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
-import 'package:foglm/features/auth/data/my_profile_provider.dart';
 import 'package:foglm/features/auth/domain/my_profile.dart';
 import 'package:foglm/features/auth/domain/public_user.dart';
 import 'package:foglm/features/auth/presentation/profile_edit_screen.dart';

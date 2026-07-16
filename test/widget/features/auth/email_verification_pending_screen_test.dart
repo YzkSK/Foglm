@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/presentation/email_verification_pending_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';

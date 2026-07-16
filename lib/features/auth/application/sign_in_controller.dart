@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignInController extends AsyncNotifier<void> {

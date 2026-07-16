@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:foglm/features/album/data/album_provider.dart';
+import 'package:foglm/features/album/application/album_provider.dart';
 import 'package:foglm/features/album/data/album_repository.dart';
 import 'package:foglm/features/album/domain/album_photo.dart';
 import 'package:mocktail/mocktail.dart';
