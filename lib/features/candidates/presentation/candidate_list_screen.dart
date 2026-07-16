@@ -3,9 +3,10 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:foglm/features/candidates/application/cast_vote_controller.dart';
 import 'package:foglm/features/candidates/data/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
+import 'package:foglm/features/candidates/presentation/vote_screen.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/candidates`ルートの`extra`として渡す引数。
 class CandidateListArgs {
@@ -18,58 +19,15 @@ class CandidateListArgs {
 ///
 /// その日撮影された写真をボヤけた状態で一覧表示し、現在の得票状況を
 /// 確認できる(仕様書 3.5 / 4.1 S07参照)。候補写真をタップすると
-/// その場でその写真に投票する(再投票可、最後の一票のみ有効)。
-/// 候補写真の拡大表示(S08、#23)は別issueで対応する。
-class CandidateListScreen extends ConsumerStatefulWidget {
+/// 投票画面(S08、#23)へ遷移し、そこで投票する。
+class CandidateListScreen extends ConsumerWidget {
   const CandidateListScreen({required this.groupId, super.key});
 
   final String groupId;
 
   @override
-  ConsumerState<CandidateListScreen> createState() =>
-      _CandidateListScreenState();
-}
-
-class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
-  // 投票中はタップ元のタイルにだけローディング表示を出すために、対象の
-  // photoIdを保持する(全タイル共通のローディングフラグだけだと、
-  // どの写真に投票しようとしたのか分からなくなるため)。
-  String? _votingPhotoId;
-
-  Future<void> _vote(String photoId) async {
-    setState(() => _votingPhotoId = photoId);
-    try {
-      await ref
-          .read(castVoteControllerProvider.notifier)
-          .submit(groupId: widget.groupId, photoId: photoId);
-    } finally {
-      if (mounted) {
-        setState(() => _votingPhotoId = null);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final candidatesAsync = ref.watch(todayCandidatesProvider(widget.groupId));
-    // 連打による二重投票を防ぐため、投票中は全タイルを操作不可にする
-    // (cast_voteはUPSERTで冪等だが、どのタップがどの結果に対応するか
-    // 分かりにくくなるのを避ける)。どのタイルがタップされたかは
-    // _votingPhotoIdで区別し、そのタイルにのみローディング表示を出す。
-    final isVoting = ref.watch(
-      castVoteControllerProvider.select((state) => state.isLoading),
-    );
-
-    ref.listen<AsyncValue<void>>(castVoteControllerProvider, (previous, next) {
-      // 投票失敗を握り潰さず、ユーザーにも通知する。
-      if (next.hasError) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
-          const SnackBar(content: Text('投票に失敗しました。時間をおいて再度お試しください')),
-        );
-      }
-    });
+  Widget build(BuildContext context, WidgetRef ref) {
+    final candidatesAsync = ref.watch(todayCandidatesProvider(groupId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('今日の候補')),
@@ -91,9 +49,10 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
                 final candidate = candidates[index];
                 return _CandidateTile(
                   candidate: candidate,
-                  enabled: !isVoting,
-                  isVoting: _votingPhotoId == candidate.id,
-                  onTap: () => _vote(candidate.id),
+                  onTap: () => context.push(
+                    '/candidates/vote',
+                    extra: VoteArgs(groupId: groupId, photoId: candidate.id),
+                  ),
                 );
               },
             );
@@ -116,16 +75,9 @@ class _CandidateListScreenState extends ConsumerState<CandidateListScreen> {
 }
 
 class _CandidateTile extends StatelessWidget {
-  const _CandidateTile({
-    required this.candidate,
-    required this.enabled,
-    required this.isVoting,
-    required this.onTap,
-  });
+  const _CandidateTile({required this.candidate, required this.onTap});
 
   final CandidatePhotoRow candidate;
-  final bool enabled;
-  final bool isVoting;
   final VoidCallback onTap;
 
   @override
@@ -133,7 +85,7 @@ class _CandidateTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return InkWell(
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(
@@ -197,13 +149,6 @@ class _CandidateTile extends StatelessWidget {
                 child: Icon(
                   Icons.check_circle,
                   color: colorScheme.primary,
-                ),
-              ),
-            if (isVoting)
-              const ColoredBox(
-                color: Colors.black38,
-                child: Center(
-                  child: CircularProgressIndicator(color: Colors.white),
                 ),
               ),
           ],

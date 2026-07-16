@@ -1,38 +1,50 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:foglm/features/candidates/data/candidate_repository.dart';
-import 'package:foglm/features/candidates/data/vote_repository.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 import 'package:foglm/features/candidates/presentation/candidate_list_screen.dart';
+import 'package:foglm/features/candidates/presentation/vote_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockCandidateRepository extends Mock implements CandidateRepository {}
 
-class MockVoteRepository extends Mock implements VoteRepository {}
-
 void main() {
   late MockCandidateRepository candidateRepository;
-  late MockVoteRepository voteRepository;
 
   setUp(() {
     candidateRepository = MockCandidateRepository();
-    voteRepository = MockVoteRepository();
   });
 
   Future<void> pumpScreen(WidgetTester tester) {
+    final router = GoRouter(
+      initialLocation: '/candidates',
+      routes: [
+        GoRoute(
+          path: '/candidates',
+          builder: (context, state) =>
+              const CandidateListScreen(groupId: 'group-1'),
+        ),
+        GoRoute(
+          path: '/candidates/vote',
+          builder: (context, state) {
+            final args = state.extra as VoteArgs?;
+            return Scaffold(
+              body: Text('投票画面プレースホルダー: ${args?.photoId}'),
+            );
+          },
+        ),
+      ],
+    );
+
     return tester.pumpWidget(
       ProviderScope(
         overrides: [
           candidateRepositoryProvider.overrideWithValue(candidateRepository),
-          voteRepositoryProvider.overrideWithValue(voteRepository),
         ],
-        child: const MaterialApp(
-          home: CandidateListScreen(groupId: 'group-1'),
-        ),
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
   }
@@ -57,7 +69,9 @@ void main() {
     expect(find.text('2票'), findsOneWidget);
   });
 
-  testWidgets('tapping a candidate casts a vote for it', (tester) async {
+  testWidgets('tapping a candidate navigates to the vote screen', (
+    tester,
+  ) async {
     when(
       () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
     ).thenAnswer(
@@ -70,9 +84,6 @@ void main() {
         ),
       ],
     );
-    when(
-      () => voteRepository.castVote(photoId: 'photo-1'),
-    ).thenAnswer((_) async {});
 
     await pumpScreen(tester);
     await tester.pumpAndSettle();
@@ -80,73 +91,7 @@ void main() {
     await tester.tap(find.byType(InkWell));
     await tester.pumpAndSettle();
 
-    verify(() => voteRepository.castVote(photoId: 'photo-1')).called(1);
-  });
-
-  testWidgets(
-    'shows a loading indicator only on the tapped tile, and disables '
-    'the others',
-    (tester) async {
-      when(
-        () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
-      ).thenAnswer(
-        (_) async => const [
-          CandidatePhotoRow(
-            id: 'photo-1',
-            blurredUrl: '',
-            voteCount: 0,
-            votedByMe: false,
-          ),
-          CandidatePhotoRow(
-            id: 'photo-2',
-            blurredUrl: '',
-            voteCount: 0,
-            votedByMe: false,
-          ),
-        ],
-      );
-      when(
-        () => voteRepository.castVote(photoId: 'photo-1'),
-      ).thenAnswer((_) => Completer<void>().future);
-
-      await pumpScreen(tester);
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byType(InkWell).first);
-      await tester.pump();
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      final tiles = tester.widgetList<InkWell>(find.byType(InkWell)).toList();
-      expect(tiles[0].onTap, isNull);
-      expect(tiles[1].onTap, isNull);
-    },
-  );
-
-  testWidgets('shows a snackbar when casting a vote fails', (tester) async {
-    when(
-      () => candidateRepository.getTodayCandidates(groupId: 'group-1'),
-    ).thenAnswer(
-      (_) async => const [
-        CandidatePhotoRow(
-          id: 'photo-1',
-          blurredUrl: '',
-          voteCount: 0,
-          votedByMe: false,
-        ),
-      ],
-    );
-    when(
-      () => voteRepository.castVote(photoId: 'photo-1'),
-    ).thenThrow(Exception('unexpected'));
-
-    await pumpScreen(tester);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(InkWell));
-    await tester.pumpAndSettle();
-
-    expect(find.text('投票に失敗しました。時間をおいて再度お試しください'), findsOneWidget);
+    expect(find.text('投票画面プレースホルダー: photo-1'), findsOneWidget);
   });
 
   testWidgets('shows an empty message when there are no candidates', (
