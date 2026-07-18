@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
 import 'package:foglm/features/auth/application/sign_out_controller.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
 import 'package:foglm/features/auth/domain/public_user.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

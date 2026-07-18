@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:foglm/features/candidates/application/cast_vote_controller.dart';
-import 'package:foglm/features/candidates/data/today_candidates_provider.dart';
+import 'package:foglm/features/candidates/application/today_candidates_provider.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 
 /// `/candidates`ルートの`extra`として渡す引数。

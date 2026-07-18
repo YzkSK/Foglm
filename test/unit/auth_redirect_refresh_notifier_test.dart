@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foglm/core/router/app_router.dart';
-import 'package:foglm/features/auth/data/current_public_user_provider.dart';
+import 'package:foglm/features/auth/application/current_public_user_provider.dart';
 import 'package:foglm/features/auth/domain/public_user.dart';
 
 void main() {

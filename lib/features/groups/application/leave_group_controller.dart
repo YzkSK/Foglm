@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/groups/application/my_groups_provider.dart';
 import 'package:foglm/features/groups/data/group_repository.dart';
-import 'package:foglm/features/groups/data/my_groups_provider.dart';
 
 class LeaveGroupController extends AsyncNotifier<void> {
   @override

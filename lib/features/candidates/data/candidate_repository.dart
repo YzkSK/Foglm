@@ -7,7 +7,7 @@ import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foglm/core/supabase/supabase_providers.dart';
 import 'package:foglm/core/utils/date_formatting.dart';
-import 'package:foglm/features/candidates/data/candidate_logic.dart';
+import 'package:foglm/features/candidates/domain/candidate_logic.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

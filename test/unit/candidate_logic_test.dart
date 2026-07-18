@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:foglm/features/candidates/data/candidate_logic.dart';
+import 'package:foglm/features/candidates/domain/candidate_logic.dart';
 import 'package:foglm/features/candidates/domain/candidate_photo.dart';
 
 void main() {

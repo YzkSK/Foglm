@@ -3,8 +3,8 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:foglm/features/auth/application/my_profile_provider.dart';
 import 'package:foglm/features/auth/application/sign_out_controller.dart';
-import 'package:foglm/features/auth/data/my_profile_provider.dart';
 import 'package:go_router/go_router.dart';
 
 /// 設定・マイページ画面(S12)。

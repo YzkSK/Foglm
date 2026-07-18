@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:foglm/features/auth/application/my_profile_provider.dart';
 import 'package:foglm/features/auth/data/auth_repository.dart';
-import 'package:foglm/features/auth/data/my_profile_provider.dart';
 import 'package:foglm/features/auth/domain/my_profile.dart';
 import 'package:foglm/features/auth/presentation/settings_screen.dart';
 import 'package:mocktail/mocktail.dart';
